@@ -1,0 +1,8 @@
+Changes:
+- ligating_loop_env.py line 308
+    self is wrong: elif self.observation_type == ObservationType.RGBD:
+- /imitation/util/util.py
+    safe_to_tensor: inconsistent -> if input Tensor, but need to be on another device
+    -> won't change tensor
+    another workaround would be pushing transitions to gpu, but api doesn't have this function
+
