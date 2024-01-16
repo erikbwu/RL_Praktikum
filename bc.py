@@ -1,4 +1,5 @@
 import numpy as np
+from gymnasium.spaces import Box
 from imitation.algorithms import bc
 from imitation.data.rollout import flatten_trajectories
 from imitation.data.types import Trajectory
@@ -43,23 +44,25 @@ def _npz_to_traj(n_traj: 500):
 
 
 env = DummyVecEnv([_make_env for _ in range(1)])
-demos = _npz_to_traj(1)
+demos = _npz_to_traj(5)
 transitions = flatten_trajectories(demos)
 rng = np.random.default_rng()
-policy = ActorCriticPolicy(env.observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128])
+obs_array_shape = (65536, 3)
+observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
+policy = ActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128])
 
 print(env.observation_space)
 
 bc_trainer = bc.BC(
-    observation_space=env.observation_space,
+    observation_space=observation_space,
     action_space=env.action_space,
     demonstrations=transitions,
     policy=policy,
     rng=rng,
     device='cuda'
 )
-# bc_trainer.train(n_epochs=2)
-# reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, 10)
-# print(f"Reward after training: {reward_after_training}")
-#
-# print('done')
+bc_trainer.train(n_epochs=2)
+reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, 10)
+print(f"Reward after training: {reward_after_training}")
+
+print('done')
