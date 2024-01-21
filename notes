@@ -6,3 +6,8 @@ Changes:
     -> won't change tensor
     another workaround would be pushing transitions to gpu, but api doesn't have this function
 
+
+
+Qs:
+need own evaluation function, what is best
+

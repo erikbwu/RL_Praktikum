@@ -1,10 +1,13 @@
+from pathlib import Path
+
 import open3d as o3d
 import numpy as np
 
-ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
+output_directory = "/home/erik/sofa_env_demonstrations/pointclouds/ligating_loop"
 
-def display3d():
-    path = '/home/erik/RL_P/LigatingLoopEnv_0.npz'
+for i in range(3,20):
+    print(f'File: {i}')
+    path = f'/home/erik/sofa_env_demonstrations/ligating_loop/LigatingLoopEnv_{i}.npz'
     npz_data = np.load(path)
     print(len(npz_data['rgb']))
 
@@ -15,11 +18,11 @@ def display3d():
     z_near = npz_data['metadata.camera.z_near']
     z_far = npz_data['metadata.camera.z_far']
 
-
-    for timestep in range(5, len(npz_data['rgb']),20):
+    for timestep in range(len(npz_data['rgb'])):
         print('timestep: ', timestep)
         rgb = npz_data['rgb'][timestep]
         depth = npz_data['depth'][timestep]
+        depth = np.where(depth >= z_far, 0, depth)
 
         color_image = o3d.geometry.Image(rgb)
         depth_image = o3d.geometry.Image(depth)
@@ -31,20 +34,8 @@ def display3d():
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
             rgbd_image,
             intrinsics)
-        # o3d.camera.PinholeCameraIntrinsic(
-        #     o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault))
 
-        # Flip it, otherwise the pointcloud will be upside down
         pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-        o3d.visualization.draw_geometries([pcd])
-
-
-def get_z_fars(num=100):
-    for i in range(num):
-        path = f'{ligating_loop_path}/LigatingLoopEnv_{i}.npz'
-        npz_data = np.load(path)
-        print(npz_data['metadata.camera.z_far'])
-
-
-if __name__ == '__main__':
-    get_z_fars()
+        Path(f'{output_directory}/LigatingLoopEnv_{i}').mkdir(parents=True, exist_ok=True)
+        file_name = f'{output_directory}/LigatingLoopEnv_{i}/t_{timestep}.ply'
+        o3d.io.write_point_cloud(file_name, pcd)
