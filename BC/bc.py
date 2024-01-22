@@ -71,7 +71,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
 
         self.mlp = MLP([1024, 512, features_dim], norm=None)
 
-    def forward(self, observations: torch.Tensor) -> torch.Tensor:
+    def forward(self, observations: list[np.ndarray]) -> torch.Tensor:
         num_points = torch.full((observations.shape[0],), 65536)
         batch = torch.repeat_interleave(
             torch.arange(len(num_points), device=num_points.device),
@@ -179,14 +179,14 @@ observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_sh
 policy = ActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128], features_extractor_class=PointNetFeaturesExtractor)
 
 
-bc_trainer = bc.BC(
+bc_trainer = bc.BC_Pyg(
     observation_space=observation_space,
     action_space=env.action_space,
     demonstrations=demos,
     policy=policy,
     rng=rng,
     device='cuda',
-    batch_size=1,
+    batch_size=2,
 )
 bc_trainer.train(n_epochs=1)
 reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, 10)
