@@ -6,8 +6,14 @@ Changes:
     -> won't change tensor
     another workaround would be pushing transitions to gpu, but api doesn't have this function
 
+- pytorch geometric dataloader
+    added numpy ndarray case
+
+/home/erik/miniconda3/envs/sofa/lib/python3.9/site-packages/stable_baselines3/common/policies.py:
+- line 670+
 
 
-Qs:
-need own evaluation function, what is best
+
+ToDO:
+- make own Actor-Critic-Policy class and override extract features
 

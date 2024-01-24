@@ -19,7 +19,7 @@ import torch
 from gymnasium import spaces
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-from torch_geometric.data import Data
+from torch_geometric.data import Data, Batch
 from torch_geometric.nn import PointNetConv, fps, radius, global_max_pool, MLP
 
 
@@ -71,19 +71,19 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
 
         self.mlp = MLP([1024, 512, features_dim], norm=None)
 
-    def forward(self, observations: list[np.ndarray]) -> torch.Tensor:
-        num_points = torch.full((observations.shape[0],), 65536)
-        batch = torch.repeat_interleave(
-            torch.arange(len(num_points), device=num_points.device),
-            repeats=num_points,
-        )
-        flattened_observations = torch.flatten(observations, end_dim=1)
+    def forward(self, observations: Batch) -> torch.Tensor:
+        # num_points = torch.full((observations.shape[0],), 65536)
+        # batch = torch.repeat_interleave(
+        #     torch.arange(len(num_points), device=num_points.device),
+        #     repeats=num_points,
+        # )
+        # flattened_observations = torch.flatten(observations, end_dim=1)
+        #
+        # data = Data(pos=flattened_observations, batch=batch)
 
-        data = Data(pos=flattened_observations, batch=batch)
 
-
-        sa0_out = (None, data.pos, torch.zeros(data.pos.size(0), dtype=torch.long).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu')))
-        print(data.pos.shape)
+        sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
+       # print(data.pos.shape)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
         sa3_out = self.sa3_module(*sa2_out)
@@ -133,7 +133,7 @@ def load_point_clouds_from_directory(directory):
 
             # Read the PointCloud from the file
             pcd = o3d.io.read_point_cloud(file_path)
-            pcds.append(pcd.points)
+            pcds.append(Data(pos=torch.from_numpy(np.asarray(pcd.points)), num_nodes=len(pcd.points)))
     return pcds
 
 def make_trajectories(n_traj = 10):
