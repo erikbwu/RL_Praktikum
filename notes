@@ -12,8 +12,11 @@ Changes:
 /home/erik/miniconda3/envs/sofa/lib/python3.9/site-packages/stable_baselines3/common/policies.py:
 - line 670+
 
+/home/erik/miniconda3/envs/sofa/lib/python3.9/site-packages/stable_baselines3/common/policies.py
+- line 340 and 383
 
 
 ToDO:
 - make own Actor-Critic-Policy class and override extract features
+- and override predict function to convert input to pytorch geometric function
 
