@@ -1,5 +1,9 @@
+from pathlib import Path
+
 import open3d as o3d
 import numpy as np
+
+output_directory = "/home/erik/RL_Praktikum/Pointclouds/ligating_loop"
 
 for i in range(20):
     print(f'File: {i}')
@@ -17,10 +21,9 @@ for i in range(20):
     pcds = []
 
     for timestep in range(len(npz_data['rgb'])):
-        print('timestep: ', timestep)
         rgb = npz_data['rgb'][timestep]
         depth = npz_data['depth'][timestep]
-        #depth = np.where(depth >= z_far, 0, depth)
+        depth = np.where(depth >= z_far, 0, depth)
 
         color_image = o3d.geometry.Image(rgb)
         depth_image = o3d.geometry.Image(depth)
@@ -34,6 +37,12 @@ for i in range(20):
             intrinsics)
 
         pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-        pcds.append(np.asarray(pcd.points))
+        Path(f'{output_directory}/LigatingLoopEnv_{i}').mkdir(parents=True, exist_ok=True)
+        file_name = f'{output_directory}/LigatingLoopEnv_{i}/t_{timestep}.npz'
 
-    np.save(f'/home/erik/sofa_env_demonstrations/Pointclouds/LigatingLoopEnv_{i}.npy', pcds)
+        pcds = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors)
+        np.savez(file_name, pcds=pcds, colors=colors)
+        print(f'Saved timestep: {timestep} with {pcds.shape[0]} points')
+
+    print('----------------------------------------------------------------------')

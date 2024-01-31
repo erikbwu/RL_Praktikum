@@ -10,8 +10,8 @@ from torch_geometric.nn import PointNetConv, fps, radius, global_max_pool, MLP
 class SAModule(torch.nn.Module):
     def __init__(self, ratio, r, nn):
         super().__init__()
-        self.ratio = ratio
         self.r = r
+        self.ratio = ratio
         self.conv = PointNetConv(nn, add_self_loops=False)
 
     def forward(self, x, pos, batch):
@@ -53,18 +53,24 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3, 128, 128, 256]))
         self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024]))
 
-        self.mlp = MLP([1024, 512, features_dim], dropout=0.5, norm=None)
+        self.mlp = MLP([1024, 512, features_dim], norm=None)
 
-    def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        data = Data(pos=observations).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    def forward(self, observations: Data) -> torch.Tensor:
+        if isinstance(observations, torch.Tensor):
+            # num_points = torch.full((observations.shape[0],), 1)
+            # batch = torch.repeat_interleave(
+            #     torch.arange(len(num_points), device=num_points.device),
+            #     repeats=num_points,
+            # )
+            # flattened_observations = torch.flatten(observations, end_dim=1)
+            observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(observations.device)
 
-        sa0_out = (None, data.pos, torch.zeros(data.pos.size(0), dtype=torch.long))
+        sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
         sa3_out = self.sa3_module(*sa2_out)
         x, pos, batch = sa3_out
         return self.mlp(x).log_softmax(dim=-1)
-
 
 
 # class PointNetActorCriticPolicy(ActorCriticPolicy):
