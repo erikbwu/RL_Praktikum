@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 import open3d as o3d
@@ -7,6 +8,7 @@ from imitation.algorithms import bc
 from imitation.data.rollout import flatten_trajectories
 from imitation.data.types import Trajectory, TransitionsMinimal, Transitions
 from imitation.data.wrappers import RolloutInfoWrapper
+from imitation.policies.serialize import save_stable_model
 from sofa_env.base import RenderMode
 from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
 from gymnasium.wrappers import TimeLimit
@@ -260,11 +262,12 @@ def make_trajectories(n_traj = 10):
 
     return ret
 
-def make_transitions(n_traj = 10):
+def make_transitions(n_traj = 10, start=0):
     obs = []
+    next_obs = []
     actions = []
     dones = []
-    for i in range(n_traj):
+    for i in range(start, start + n_traj):
         pcds = load_point_clouds_from_directory(f'/home/erik/sofa_env_demonstrations/pointclouds/ligating_loop'
                                                 f'/LigatingLoopEnv_{i}')
         npz_data = np.load(f'/home/erik/sofa_env_demonstrations/ligating_loop/LigatingLoopEnv_{i}.npz')
@@ -272,27 +275,29 @@ def make_transitions(n_traj = 10):
         done = np.zeros(len(action), dtype=bool)
         done[-1] = True
 
-        obs.extend(pcds)
+        obs.extend(pcds[:-1])
+        next_obs.extend(pcds[1:])
         actions.extend(action)
         dones.extend(done)
         print(f'{i + 1}/{n_traj}: actions:{len(actions)}  observations:{len(obs)}')
 
-    print('actionsshape:' + str(np.asarray(actions).shape))
-    return Transitions(obs[:-1], np.asarray(actions), np.array([{}] * len(actions)), obs[1:],  np.asarray(dones))
+
+    return Transitions(obs, np.asarray(actions), np.array([{}] * len(actions)), next_obs,  np.asarray(dones))
 
 
 
 
-
+num_traj = 10
 env = DummyVecEnv([_make_env for _ in range(1)])
 #demos = _npz_to_traj(1)
-demos = make_transitions(n_traj=1)
+
 #transitions = flatten_trajectories(demos)
 rng = np.random.default_rng()
 obs_array_shape = (65536, 3)
 observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
 policy = ActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128], features_extractor_class=PointNetFeaturesExtractor)
 
+demos = make_transitions(n_traj=10)
 
 bc_trainer = bc.BC_Pyg(
     observation_space=observation_space,
@@ -304,10 +309,15 @@ bc_trainer = bc.BC_Pyg(
     batch_size=8,
     minibatch_size=2,
 )
-
 #reward_before_training, _ = evaluate_policy(bc_trainer.policy, _make_env(), 10)
 #print(f"Reward before training: {reward_before_training}")
+# for i in range(1, num_traj):
+#     demos = make_transitions(1, i)
+#     bc_trainenr.set
+#     bc_trainer.train(n_epochs=1)
 bc_trainer.train(n_epochs=1)
+save_stable_model(Path('./model'), bc_trainer.policy)
+
 reward_after_training, _ = evaluate_policy(bc_trainer.policy, _make_env(), 10)
 print(f"Reward after training: {reward_after_training}")
 
