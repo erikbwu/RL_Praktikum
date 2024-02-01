@@ -21,7 +21,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from torch_geometric.data import Data, Batch
 
-from policy.PointNetActorCritic import PointNetFeaturesExtractor
+from policy.PointNetActorCritic import PointNetFeaturesExtractor, PointNetActorCriticPolicy
 from util.data import make_transitions
 from util.evaluate_policy import evaluate_policy
 from util.wrappers import RolloutInfoWrapper
@@ -53,8 +53,8 @@ env = DummyVecEnv([_make_env for _ in range(1)])
 rng = np.random.default_rng()
 obs_array_shape = (65536, 3)
 observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
-policy = ActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128], features_extractor_class=PointNetFeaturesExtractor)
-
+#policy = ActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128], features_extractor_class=PointNetFeaturesExtractor)
+policy = PointNetActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128])
 demos = make_transitions(n_traj=1)
 
 bc_trainer = bc.BC_Pyg(
@@ -67,7 +67,7 @@ bc_trainer = bc.BC_Pyg(
     batch_size=8,
     minibatch_size=2,
 )
-reward_before_training, _ = evaluate_policy(bc_trainer.policy, _make_env(), 1)
+#reward_before_training, _ = evaluate_policy(bc_trainer.policy, _make_env(), 1)
 #print(f"Reward before training: {reward_before_training}")
 # for i in range(1, num_traj):
 #     demos = make_transitions(1, i)

@@ -1,4 +1,9 @@
+import warnings
+from typing import Callable, Optional, Union, Tuple, List, Dict
+
 import torch
+import torch as th
+import numpy as np
 from gymnasium import spaces
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
@@ -73,43 +78,103 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         return self.mlp(x).log_softmax(dim=-1)
 
 
-# class PointNetActorCriticPolicy(ActorCriticPolicy):
-#     def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, **kwargs):
-#         super(PointNetActorCriticPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=True)
-#
-#         with tf.variable_scope("model", reuse=reuse):
-#             activ = tf.nn.relu
-#
-#             extracted_features = nature_cnn(self.processed_obs, **kwargs)
-#             extracted_features = tf.layers.flatten(extracted_features)
-#
-#             pi_h = extracted_features
-#             for i, layer_size in enumerate([128, 128, 128]):
-#                 pi_h = activ(tf.layers.dense(pi_h, layer_size, name='pi_fc' + str(i)))
-#             pi_latent = pi_h
-#
-#             vf_h = extracted_features
-#             for i, layer_size in enumerate([32, 32]):
-#                 vf_h = activ(tf.layers.dense(vf_h, layer_size, name='vf_fc' + str(i)))
-#             value_fn = tf.layers.dense(vf_h, 1, name='vf')
-#             vf_latent = vf_h
-#
-#             self._proba_distribution, self._policy, self.q_value = \
-#                 self.pdtype.proba_distribution_from_latent(pi_latent, vf_latent, init_scale=0.01)
-#
-#         self._value_fn = value_fn
-#         self._setup_init()
-#
-#     def step(self, obs, state=None, mask=None, deterministic=False):
-#         if deterministic:
-#             action, value, neglogp = self.sess.run([self.deterministic_action, self.value_flat, self.neglogp],
-#                                                    {self.obs_ph: obs})
-#         else:
-#             action, value, neglogp = self.sess.run([self.action, self.value_flat, self.neglogp],
-#                                                    {self.obs_ph: obs})
-#         return action, value, self.initial_state, neglogp
-#
-#     def proba_step(self, obs, state=None, mask=None):
-#         return self.sess.run(self.policy_proba, {self.obs_ph: obs})
-#
-#     def value(self, obs, state=None, mask=None):
+class PointNetActorCriticPolicy(ActorCriticPolicy):
+    def __init__(
+        self,
+        observation_space: spaces.Space,
+        action_space: spaces.Space,
+        lr_schedule: Callable[[float], float],
+        net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            observation_space,
+            action_space,
+            lr_schedule,
+            net_arch,
+            features_extractor_class=PointNetFeaturesExtractor,
+            *args,
+            **kwargs,
+        )
+
+    def extract_features(  # type: ignore[override]
+            self, obs, features_extractor: Optional[BaseFeaturesExtractor] = None
+    ) -> Union[th.Tensor, Tuple[th.Tensor, th.Tensor]]:
+        """
+        Preprocess the observation if needed and extract features.
+
+        :param obs: Observation
+        :param features_extractor: The features extractor to use. If None, then ``self.features_extractor`` is used.
+        :return: The extracted features. If features extractor is not shared, returns a tuple with the
+            features for the actor and the features for the critic.
+        """
+        if self.share_features_extractor:
+            return self.features_extractor(obs)
+        else:
+            if features_extractor is not None:
+                warnings.warn(
+                    "Provided features_extractor will be ignored because the features extractor is not shared.",
+                    UserWarning,
+                )
+
+            pi_features = super().extract_features(obs, self.pi_features_extractor)
+            vf_features = super().extract_features(obs, self.vf_features_extractor)
+            return pi_features, vf_features
+
+    def predict(
+        self,
+        observation: Union[np.ndarray, Dict[str, np.ndarray]],
+        state: Optional[Tuple[np.ndarray, ...]] = None,
+        episode_start: Optional[np.ndarray] = None,
+        deterministic: bool = False,
+    ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
+        """
+        Get the policy action from an observation (and optional hidden state).
+        Includes sugar-coating to handle different observations (e.g. normalizing images).
+
+        :param observation: the input observation
+        :param state: The last hidden states (can be None, used in recurrent policies)
+        :param episode_start: The last masks (can be None, used in recurrent policies)
+            this correspond to beginning of episodes,
+            where the hidden states of the RNN must be reset.
+        :param deterministic: Whether or not to return deterministic actions.
+        :return: the model's action and the next hidden state
+            (used in recurrent policies)
+        """
+        # Switch to eval mode (this affects batch norm / dropout)
+        self.set_training_mode(False)
+
+        # Check for common mistake that the user does not mix Gym/VecEnv API
+        # Tuple obs are not supported by SB3, so we can safely do that check
+        if isinstance(observation, tuple) and len(observation) == 2 and isinstance(observation[1], dict):
+            raise ValueError(
+                "You have passed a tuple to the predict() function instead of a Numpy array or a Dict. "
+                "You are probably mixing Gym API with SB3 VecEnv API: `obs, info = env.reset()` (Gym) "
+                "vs `obs = vec_env.reset()` (SB3 VecEnv). "
+                "See related issue https://github.com/DLR-RM/stable-baselines3/issues/1694 "
+                "and documentation for more information: https://stable-baselines3.readthedocs.io/en/master/guide/vec_envs.html#vecenv-api-vs-gym-api"
+            )
+
+        obs_tensor, vectorized_env = observation, False #todo changed
+
+        with th.no_grad():
+            actions = self._predict(obs_tensor, deterministic=deterministic)
+        # Convert to numpy, and reshape to the original action shape
+        actions = actions.cpu().numpy().reshape((-1, *self.action_space.shape))  # type: ignore[misc]
+
+        if isinstance(self.action_space, spaces.Box):
+            if self.squash_output:
+                # Rescale to proper domain when using squashing
+                actions = self.unscale_action(actions)  # type: ignore[assignment, arg-type]
+            else:
+                # Actions could be on arbitrary scale, so clip the actions to avoid
+                # out of bound error (e.g. if sampling from a Gaussian distribution)
+                actions = np.clip(actions, self.action_space.low, self.action_space.high)  # type: ignore[assignment, arg-type]
+
+        # Remove batch dimension if needed
+        if not vectorized_env:
+            assert isinstance(actions, np.ndarray)
+            actions = actions.squeeze(axis=0)
+
+        return actions, state  # type: ignore[return-value]
