@@ -4,7 +4,7 @@ import numpy as np
 ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
 
 def display3d():
-    path = '/home/erik/RL_P/LigatingLoopEnv_0.npz'
+    path = f'{ligating_loop_path}/LigatingLoopEnv_5.npz'
     npz_data = np.load(path)
     print(len(npz_data['rgb']))
 
@@ -39,6 +39,10 @@ def display3d():
         o3d.visualization.draw_geometries([pcd])
 
 
+def display_numpy():
+    pass #todo
+
+
 def get_z_fars(num=100):
     for i in range(num):
         path = f'{ligating_loop_path}/LigatingLoopEnv_{i}.npz'
@@ -47,4 +51,4 @@ def get_z_fars(num=100):
 
 
 if __name__ == '__main__':
-    get_z_fars()
+    display3d()

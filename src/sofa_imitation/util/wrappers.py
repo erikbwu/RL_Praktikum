@@ -35,7 +35,7 @@ class RolloutInfoWrapper(gym.Wrapper):
         if done:
             assert "rollout" not in info
             info["rollout"] = {
-                "obs": types.stack_maybe_dictobs(self._obs),
+                "obs": self._obs,
                 "rews": np.stack(self._rews),
             }
         return obs, rew, terminated, truncated, info

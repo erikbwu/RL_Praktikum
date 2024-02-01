@@ -20,3 +20,15 @@ ToDO:
 - make own Actor-Critic-Policy class and override extract features
 - and override predict function to convert input to pytorch geometric function
 
+
+dataset bigger than memory
+hyperparameter bc
+other imitation algorithms
+
+
+partition -> gpu_4
+gres
+submitit_local
+dev_queus
+rsync
+

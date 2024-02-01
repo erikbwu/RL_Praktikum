@@ -3,7 +3,6 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-import open3d as o3d
 from gymnasium.spaces import Box
 from imitation.algorithms import bc
 from imitation.data.rollout import flatten_trajectories
@@ -56,7 +55,7 @@ obs_array_shape = (65536, 3)
 observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
 policy = ActorCriticPolicy(observation_space, env.action_space, lambda epoch: 1e-3 * 0.99 ** epoch, [256, 128], features_extractor_class=PointNetFeaturesExtractor)
 
-demos = make_transitions(n_traj=10)
+demos = make_transitions(n_traj=1)
 
 bc_trainer = bc.BC_Pyg(
     observation_space=observation_space,
@@ -68,7 +67,7 @@ bc_trainer = bc.BC_Pyg(
     batch_size=8,
     minibatch_size=2,
 )
-#reward_before_training, _ = evaluate_policy.py(bc_trainer.policy, _make_env(), 10)
+reward_before_training, _ = evaluate_policy(bc_trainer.policy, _make_env(), 1)
 #print(f"Reward before training: {reward_before_training}")
 # for i in range(1, num_traj):
 #     demos = make_transitions(1, i)

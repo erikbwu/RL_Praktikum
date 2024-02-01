@@ -19,7 +19,7 @@ def load_point_clouds_from_directory(directory):
 
 
 # Specify the directory containing your PLY files
-input_directory = '/home/erik/sofa_env_demonstrations/pointclouds'
+input_directory = '/home/erik/RL_Praktikum/Pointclouds'
 
 # Load point clouds from the directory
 loaded_point_clouds = load_point_clouds_from_directory(input_directory)
