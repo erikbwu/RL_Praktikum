@@ -19,6 +19,7 @@ Changes:
 ToDO:
 - make own Actor-Critic-Policy class and override extract features
 - and override predict function to convert input to pytorch geometric function
+- add to pointcloudwrapper to return colors too, maybe change code?
 
 
 dataset bigger than memory

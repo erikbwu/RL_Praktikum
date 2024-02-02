@@ -178,3 +178,15 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             actions = actions.squeeze(axis=0)
 
         return actions, state  # type: ignore[return-value]
+
+    def get_distribution(self, obs):
+        """
+        Get the current policy distribution given the observations.
+
+        :param obs:
+        :return: the action distribution.
+        """
+        obs = th.tensor(obs).to(self.device)
+        features = self.pi_features_extractor(obs) #super().extract_features(obs, self.pi_features_extractor)
+        latent_pi = self.mlp_extractor.forward_actor(features)
+        return self._get_action_dist_from_latent(latent_pi)
