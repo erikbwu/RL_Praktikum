@@ -80,7 +80,7 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int) -> Transitions:
     actions = []
     dones = []
 
-    for i in tqdm(range(n_traj)):
+    for i in tqdm(range(n_traj), desc=f'Loading Transitions from {npz_path}'):
         npz_data = np.load(f'{npz_path}/{prefix}{i}.npz')
         
         width = npz_data['metadata.camera.width']
