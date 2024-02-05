@@ -3,13 +3,12 @@ from pathlib import Path
 
 import open3d as o3d
 import numpy as np
-from open3d.cuda.pybind.camera import PinholeCameraIntrinsic
 from tqdm import tqdm
 
 output_directory = "/home/erik/RL_Praktikum/Pointclouds/ligating_loop"
 
 
-def convertRGBDtoNumpy(rgb, depth, intrinsics: PinholeCameraIntrinsic):
+def convertRGBDtoNumpy(rgb, depth, intrinsics):
     color_image = o3d.geometry.Image(rgb)
     depth_image = o3d.geometry.Image(depth)
 
