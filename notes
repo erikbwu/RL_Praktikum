@@ -33,3 +33,23 @@ submitit_local
 dev_queus
 rsync
 
+name: sofa
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pybind11
+  - numpy
+  - pytorch-cuda=11.8
+  - scipy
+  - requests
+  - cudatoolkit
+  - matplotlib
+  - tqdm
+  - jinja2
+variables:
+  SOFA_ROOT: /home/erik/sofa/build/install
+  SOFAPYTHON3_ROOT: /home/erik/sofa/build/install/plugins/SofaPython3
+prefix: /home/erik/miniconda3/envs/sofa
+
+
