@@ -1,0 +1,10 @@
+defaults:
+  - hyperparameter: local_hp
+  - override hydra/launcher: submitit_local
+  - _self_
+
+
+timeout_min: 1
+
+
+

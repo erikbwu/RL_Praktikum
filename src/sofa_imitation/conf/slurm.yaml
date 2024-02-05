@@ -1,0 +1,5 @@
+defaults:
+  - hyperparameter: default_hyperparam
+  - override hydra/launcher: submitit_slurm
+  - _self_
+
