@@ -1,5 +1,5 @@
 defaults:
   - hyperparameter: default_hyperparam
-  - override hydra/launcher: dev_gpu4_a100
+  - override hydra/launcher: dev_gpu_4_a100
   - _self_
 
