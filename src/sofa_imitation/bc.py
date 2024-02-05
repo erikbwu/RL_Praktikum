@@ -43,7 +43,7 @@ def _make_env():
     return _env
 
 
-def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch,
+def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, evaluate_after: bool = False):
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
@@ -71,7 +71,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     )
     #reward_before_training, _ = evaluate_policy(bc_trainer.policy, _make_env(), 1)
 
-    bc_trainer.train(n_epochs=1, progress_bar=True)
+    bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
     saved_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     save_stable_model(Path(f'./model/ligating_loop/{saved_time}.zip'), bc_trainer.policy)
     log.info('Finished training and saved model')
@@ -91,11 +91,12 @@ def hydra_run(cfg: DictConfig):
     # log.info(f"Process ID {os.getpid()} executing task {cfg.task}, with {env}")
     log.info(OmegaConf.to_yaml(cfg))
     lr = cfg.hyperparameter.learning_rate
+    n_epochs = cfg.hyperparameter.number_epochs
     if isinstance(lr, str):
         lr = eval(lr)
     bs = cfg.hyperparameter.batch_size
     num_traj = cfg.hyperparameter.number_trajectories
-    run_bc(bs, lr, num_traj)
+    run_bc(bs, lr, n_epochs, num_traj)
 
 
 if __name__ == "__main__":

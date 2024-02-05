@@ -1,3 +1,4 @@
 batch_size: 2
 learning_rate: "lambda epoch: 1e-3 * 0.99 ** epoch"
 number_trajectories: 2
+number_epochs: 1
