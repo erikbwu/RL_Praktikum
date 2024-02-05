@@ -1,3 +1,6 @@
+defaults:
+  - submitit_slurm
+
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 timeout_min: 2880
 tasks_per_node: 32
