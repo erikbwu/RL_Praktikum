@@ -3,6 +3,4 @@ defaults:
 
 tasks_per_node: 32
 mem_gb: 400
-partition: gpu_4_a100
-
-
+partition: gpu_8
