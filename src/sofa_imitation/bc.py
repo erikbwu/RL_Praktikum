@@ -44,7 +44,7 @@ def _make_env():
 
 
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
-           num_traj: int = 5, evaluate_after: bool = False):
+           num_traj: int = 5, useColor: bool = False, evaluate_after: bool = False):
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
         learning_rate = lambda a: lr
@@ -58,7 +58,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     policy = PointNetActorCriticPolicy(observation_space, env.action_space, learning_rate,
                                        [256, 128])
 
-    demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj)
+    demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, useColor)
 
     bc_trainer = bc.BC_Pyg(
         observation_space=observation_space,
@@ -96,7 +96,8 @@ def hydra_run(cfg: DictConfig):
         lr = eval(lr)
     bs = cfg.hyperparameter.batch_size
     num_traj = cfg.hyperparameter.number_trajectories
-    run_bc(bs, lr, n_epochs, num_traj)
+    use_color = cfg.hyperparameter.use_color
+    run_bc(bs, lr, n_epochs, num_traj, use_color)
 
 
 if __name__ == "__main__":

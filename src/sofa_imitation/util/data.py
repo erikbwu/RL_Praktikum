@@ -74,7 +74,7 @@ def make_transitions(n_traj=10, start=0):
     return Transitions(obs, np.asarray(actions), np.array([{}] * len(actions)), next_obs, np.asarray(dones))
 
 
-def npz_to_transitions(npz_path: str, prefix: str, n_traj: int) -> Transitions:
+def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) -> Transitions:
     obs = []
     next_obs = []
     actions = []
@@ -102,8 +102,10 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int) -> Transitions:
             depth = np.where(depth >= z_far, 0, depth)
 
             pcds, colors = convertRGBDtoNumpy(rgb, depth, intrinsics)
-
-            data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds), x=colors)
+            if useColor:
+                data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds), x=colors)
+            else:
+                data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds))
 
             if timestep == 0:
                 obs.append(data)
