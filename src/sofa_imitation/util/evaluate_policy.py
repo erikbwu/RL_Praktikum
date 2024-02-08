@@ -68,7 +68,7 @@ def evaluate_policy(
             observations
         )
         new_observations, rewards, dones, truncated, infos = env.step(actions)
-        print(new_observations.shape)
+
         current_rewards += rewards
         current_lengths += 1
         for i in range(n_envs):

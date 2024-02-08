@@ -92,7 +92,7 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) 
 
         rgbs = npz_data['rgb']
         depths = npz_data['depth']
-        print(z_far)
+        # print(z_far) 220
 
         intrinsics = o3d.camera.PinholeCameraIntrinsic(width, height, focal_x, focal_y, width / 2, height / 2)
 

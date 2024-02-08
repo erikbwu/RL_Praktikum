@@ -38,7 +38,7 @@ def _make_env(use_color: bool = False):
             time_step=0.1,
             settle_steps=50,
         )
-        _env = SofaEnvPointCloudObservations(_env, max_expected_num_points=256 * 256, color=use_color)
+        _env = SofaEnvPointCloudObservations(_env, 220, max_expected_num_points=256 * 256, color=use_color)
         _env = Monitor(_env)
         _env = TimeLimit(_env, max_episode_steps=500)
         _env = RolloutInfoWrapper(_env)
@@ -53,7 +53,6 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         lr = learning_rate
         learning_rate = lambda a: lr
     m_env = _make_env(use_color)
-    print(type(m_env))
     env = DummyVecEnv([m_env for _ in range(1)])
     path = '../../../sofa_env_demonstrations/ligating_loop'
 
