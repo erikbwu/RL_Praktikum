@@ -16,7 +16,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from policy.PointNetActorCritic import PointNetActorCriticPolicy
 from util.data import npz_to_transitions
 from util.evaluate_policy import evaluate_policy
-from util.make_env import make_env_func, make_vec_sofa_env
+from util.make_env import make_vec_sofa_env
+import wandb
 
 log = logging.getLogger(__name__)
 
@@ -25,10 +26,12 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
 
     path = '../../../sofa_env_demonstrations/ligating_loop'
+    start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
         learning_rate = lambda a: lr
+
 
     ligating_loop_env = LigatingLoopEnv(
             observation_type=ObservationType.RGBD,
@@ -61,14 +64,15 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     reward_before_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
     log.info(f"Reward before training: {reward_before_training}")
 
-    bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
-    saved_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
-    save_stable_model(Path(f'./model/ligating_loop'), bc_trainer.policy, saved_time)
-    log.info('Finished training and saved model')
+    n_run = 0
+    while True:
+        bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
+        save_stable_model(Path(f'./model/ligating_loop'), bc_trainer.policy, f'{start_time}_run_{n_run}')
+        log.info('Finished training and saved model')
 
-
-    reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
-    log.info(f"Reward after training: {reward_after_training}")
+        reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
+        wandb.log({"reward": reward_after_training})
+        log.info(f"Reward after training run {n_run}: {reward_after_training}")
 
     log.info('done')
 
@@ -86,6 +90,8 @@ def hydra_run(cfg: DictConfig):
     num_traj = cfg.hyperparameter.number_trajectories
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
+
+    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg))
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
 
