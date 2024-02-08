@@ -50,13 +50,13 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(self, observation_space: spaces.Box, features_dim: int = 256):
+    def __init__(self, observation_space: spaces.Box, features_dim: int = 256, input_features_dim: int = 0):
         super().__init__(observation_space, features_dim)
 
         # Input channels account for both `pos` and node features.
-        self.sa1_module = SAModule(0.5, 0.2, MLP([3, 64, 64, 128]))
-        self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3, 128, 128, 256]))
-        self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024]))
+        self.sa1_module = SAModule(0.5, 0.2, MLP([3 + input_features_dim, 64, 64, 128]))
+        self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3 + input_features_dim, 128, 128, 256]))
+        self.sa3_module = GlobalSAModule(MLP([256 + 3 + input_features_dim, 256, 512, 1024]))
 
         self.mlp = MLP([1024, 512, features_dim], norm=None)
 
