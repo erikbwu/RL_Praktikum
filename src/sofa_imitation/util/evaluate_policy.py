@@ -74,7 +74,7 @@ def evaluate_policy(
         prediction_time = time.perf_counter()
         print(f'Prediction time: {prediction_time-start}')
         new_observations, rewards, dones, infos = env.step(actions)
-        print(new_observations.shape)
+        #print(new_observations.shape)
         current_rewards += rewards
         current_lengths += 1
         for i in range(n_envs):

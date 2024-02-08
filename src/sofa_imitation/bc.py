@@ -32,7 +32,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
 
     ligating_loop_env = LigatingLoopEnv(
             observation_type=ObservationType.RGBD,
-            render_mode=RenderMode.HUMAN,
+            render_mode=RenderMode.HEADLESS,
             action_type=ActionType.CONTINUOUS,
             image_shape=(256, 256),
             frame_skip=1,
