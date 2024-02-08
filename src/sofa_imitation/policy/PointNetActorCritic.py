@@ -5,9 +5,12 @@ import torch
 import torch as th
 import numpy as np
 from gymnasium import spaces
+
+#from processing.view_pointcloud import display_array
+from torch_geometric.transforms import GridSampling
+
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-from torch import nn
 from torch_geometric.data import Data
 from torch_geometric.nn import PointNetConv, fps, radius, global_max_pool, MLP
 
@@ -54,11 +57,12 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         super().__init__(observation_space, features_dim)
 
         # Input channels account for both `pos` and node features.
-        self.sa1_module = SAModule(0.5, 0.2, MLP([3 + input_features_dim, 64, 64, 128]))
-        self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3 + input_features_dim, 128, 128, 256]))
-        self.sa3_module = GlobalSAModule(MLP([256 + 3 + input_features_dim, 256, 512, 1024]))
+        self.sa1_module = SAModule(0.5, 0.2, MLP([3, 64, 64, 128]))
+        self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3, 128, 128, 256]))
+        self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024]))
 
         self.mlp = MLP([1024, 512, features_dim], norm=None)
+        self.grid_sampling = GridSampling(size=2.5)  #3 ~> 1100, 2.5 ~> 1500
 
     def forward(self, observations: Data) -> torch.Tensor:
         if isinstance(observations, torch.Tensor):
@@ -68,8 +72,15 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
             #     repeats=num_points,
             # )
             # flattened_observations = torch.flatten(observations, end_dim=1)
-            observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(observations.device)
-
+            if len(observations.shape) == 2:  # only handles one array observation
+                if observations.shape[-1] != 3: # has color
+                    observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
+                                        x=observations[:, 3:]).to(observations.device)
+                else:
+                    observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
+                        observations.device)
+        observations = self.grid_sampling(observations)
+        #display_array(observations.pos.cpu(), observations.x.cpu())
         sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
@@ -80,14 +91,14 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
 
 class PointNetActorCriticPolicy(ActorCriticPolicy):
     def __init__(
-        self,
-        observation_space: spaces.Space,
-        action_space: spaces.Space,
-        lr_schedule: Callable[[float], float],
-        net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
-        input_features_dim: Optional[int]  = None,
-        *args,
-        **kwargs,
+            self,
+            observation_space: spaces.Space,
+            action_space: spaces.Space,
+            lr_schedule: Callable[[float], float],
+            net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
+            input_features_dim: Optional[int] = None,
+            *args,
+            **kwargs,
     ):
         super().__init__(
             observation_space,
@@ -95,7 +106,6 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             lr_schedule,
             net_arch,
             features_extractor_class=PointNetFeaturesExtractor,
-            features_extractor_kwargs={'input_features_dim': input_features_dim},
             *args,
             **kwargs,
         )
@@ -125,11 +135,11 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             return pi_features, vf_features
 
     def predict(
-        self,
-        observation: Union[np.ndarray, Dict[str, np.ndarray]],
-        state: Optional[Tuple[np.ndarray, ...]] = None,
-        episode_start: Optional[np.ndarray] = None,
-        deterministic: bool = False,
+            self,
+            observation: Union[np.ndarray, Dict[str, np.ndarray]],
+            state: Optional[Tuple[np.ndarray, ...]] = None,
+            episode_start: Optional[np.ndarray] = None,
+            deterministic: bool = False,
     ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
         """
         Get the policy action from an observation (and optional hidden state).
@@ -158,7 +168,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
                 "and documentation for more information: https://stable-baselines3.readthedocs.io/en/master/guide/vec_envs.html#vecenv-api-vs-gym-api"
             )
 
-        obs_tensor, vectorized_env = observation, False #todo changed
+        obs_tensor, vectorized_env = observation, False  # todo changed
 
         with th.no_grad():
             actions = self._predict(obs_tensor, deterministic=deterministic)
@@ -172,7 +182,8 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             else:
                 # Actions could be on arbitrary scale, so clip the actions to avoid
                 # out of bound error (e.g. if sampling from a Gaussian distribution)
-                actions = np.clip(actions, self.action_space.low, self.action_space.high)  # type: ignore[assignment, arg-type]
+                actions = np.clip(actions, self.action_space.low,
+                                  self.action_space.high)  # type: ignore[assignment, arg-type]
 
         # Remove batch dimension if needed
         if not vectorized_env:
@@ -189,6 +200,6 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
         :return: the action distribution.
         """
         obs = th.tensor(obs).to(self.device)
-        features = self.pi_features_extractor(obs) #super().extract_features(obs, self.pi_features_extractor)
+        features = self.pi_features_extractor(obs)  # super().extract_features(obs, self.pi_features_extractor)
         latent_pi = self.mlp_extractor.forward_actor(features)
         return self._get_action_dist_from_latent(latent_pi)

@@ -59,15 +59,16 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         device='cuda',
         batch_size=batch_size,
     )
-    reward_before_training, _ = evaluate_policy(bc_trainer.policy, make_vec_sofa_env(ligating_loop_env, use_color), 1)
+    reward_before_training, _ = evaluate_policy(bc_trainer.policy, make_vec_sofa_env(ligating_loop_env, use_color), 3)
+    log.info(f"Reward before training: {reward_before_training}")
 
     bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
     saved_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
-    save_stable_model(Path(f'./model/ligating_loop/{saved_time}.zip'), bc_trainer.policy)
+    save_stable_model(Path(f'./model/ligating_loop'), bc_trainer.policy, saved_time)
     log.info('Finished training and saved model')
 
     if evaluate_after:
-        reward_after_training, _ = evaluate_policy(bc_trainer.policy, make_env_func(ligating_loop_env, use_color)(), 10)
+        reward_after_training, _ = evaluate_policy(bc_trainer.policy, make_env_func(ligating_loop_env, use_color)(), 20)
         log.info(f"Reward after training: {reward_after_training}")
 
     log.info('done')

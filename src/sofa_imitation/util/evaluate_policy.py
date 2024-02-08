@@ -67,12 +67,9 @@ def evaluate_policy(
     episode_starts = np.ones((1,), dtype=bool)
 
     while (episode_counts < episode_count_targets).any():
-        start = time.perf_counter()
         actions, _ = model.predict(
             observations[0]  # only take the first one (since there is only one env)
         )
-        prediction_time = time.perf_counter()
-        print(f'Prediction time: {prediction_time-start}')
         new_observations, rewards, dones, infos = env.step(actions)
         #print(new_observations.shape)
         current_rewards += rewards
@@ -89,6 +86,7 @@ def evaluate_policy(
                     callback(locals(), globals())
 
                 if dones:
+                    print(f'finished evaluation episode {episode_counts}')
                     if is_monitor_wrapped:
                         # Atari wrapper can send a "done" signal when
                         # the agent loses a life, but it does not correspond
@@ -97,7 +95,7 @@ def evaluate_policy(
                             # Do not trust "done" with episode endings.
                             # Monitor wrapper includes "episode" key in info if environment
                             # has been wrapped with it. Use those rewards instead.
-                            episode_rewards.append(info["episode"]["r"])
+                            episode_rewards.append(info["episode    "]["r"])
                             episode_lengths.append(info["episode"]["l"])
                             # Only increment at the real end of an episode
                             episode_counts[i] += 1

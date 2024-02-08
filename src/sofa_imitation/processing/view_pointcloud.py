@@ -1,5 +1,6 @@
 import open3d as o3d
 import numpy as np
+import torch
 
 ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
 
@@ -39,8 +40,15 @@ def display3d():
         o3d.visualization.draw_geometries([pcd])
 
 
-def display_numpy():
-    pass #todo
+def display_array(pcd_array, colors = None):
+    pcd = o3d.geometry.PointCloud()
+    pcd_array = np.asarray(pcd_array)
+    pcd.points = o3d.utility.Vector3dVector(pcd_array)
+    print(len(pcd_array))
+    if colors is not None:
+        pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
+
+    o3d.visualization.draw_geometries([pcd])
 
 
 def get_z_fars(num=100):

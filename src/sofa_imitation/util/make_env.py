@@ -9,9 +9,9 @@ from .wrappers import RolloutInfoWrapper, SofaEnvPointCloudObservations
 
 def make_env(sofa_env: SofaEnv, use_color: bool = False):
     env = SofaEnvPointCloudObservations(sofa_env, 220, max_expected_num_points=256 * 256, color=use_color)
-    # env = Monitor(env)
-    # env = TimeLimit(env, max_episode_steps=500)
-    # env = RolloutInfoWrapper(env)
+    env = Monitor(env)
+    env = TimeLimit(env, max_episode_steps=500)
+    env = RolloutInfoWrapper(env)
     return env
 
 
