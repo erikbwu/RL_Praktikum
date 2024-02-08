@@ -1,5 +1,5 @@
 defaults:
   - hyperparameter: default_hyperparam
-  - override hydra/launcher: gpu_4
+  - override hydra/launcher: gpu_8
   - _self_
 
