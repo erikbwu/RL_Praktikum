@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
-           num_traj: int = 5, use_color: bool = False, evaluate: bool = False):
+           num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
 
     path = '../../../sofa_env_demonstrations/ligating_loop'
 
@@ -39,14 +39,12 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
             time_step=0.1,
             settle_steps=50,
         )
-    m_env = make_env_func(ligating_loop_env, use_color)
-    env = DummyVecEnv([m_env for _ in range(1)])
+    env = make_vec_sofa_env(ligating_loop_env, use_color)
 
     rng = np.random.default_rng()
     obs_array_shape = (65536, 3)
     observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
-    policy = PointNetActorCriticPolicy(observation_space, env.action_space, learning_rate,
-                                       [256, 128], input_features_dim=3 if use_color else 0)
+    policy = PointNetActorCriticPolicy(observation_space, env.action_space, learning_rate, [256, 128])
 
     demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color)
 
@@ -59,18 +57,18 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         device='cuda',
         batch_size=batch_size,
     )
-    if evaluate:
-        reward_before_training, _ = evaluate_policy(bc_trainer.policy, make_vec_sofa_env(ligating_loop_env, use_color), 3)
-        log.info(f"Reward before training: {reward_before_training}")
+
+    reward_before_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
+    log.info(f"Reward before training: {reward_before_training}")
 
     bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
     saved_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     save_stable_model(Path(f'./model/ligating_loop'), bc_trainer.policy, saved_time)
     log.info('Finished training and saved model')
 
-    if evaluate:
-        reward_after_training, _ = evaluate_policy(bc_trainer.policy, make_env_func(ligating_loop_env, use_color)(), 20)
-        log.info(f"Reward after training: {reward_after_training}")
+
+    reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
+    log.info(f"Reward after training: {reward_after_training}")
 
     log.info('done')
 
@@ -87,9 +85,9 @@ def hydra_run(cfg: DictConfig):
     bs = cfg.hyperparameter.batch_size
     num_traj = cfg.hyperparameter.number_trajectories
     use_color = cfg.hyperparameter.use_color
-    evaluate = cfg.hyperparameter.evaluate
+    n_eval = cfg.hyperparameter.number_evaluations
 
-    run_bc(bs, lr, n_epochs, num_traj, use_color, evaluate)
+    run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
 
 
 if __name__ == "__main__":

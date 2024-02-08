@@ -1,7 +1,8 @@
 defaults:
   - default_hyperparam
 
-batch_size: 2
+batch_size: 128
 learning_rate: "lambda epoch: 1e-3 * 0.99 ** epoch"
 number_trajectories: 2
 number_epochs: 5
+number_evaluations: 2
