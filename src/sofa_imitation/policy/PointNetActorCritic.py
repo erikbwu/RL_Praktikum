@@ -85,6 +85,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
         action_space: spaces.Space,
         lr_schedule: Callable[[float], float],
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
+        input_features_dim: Optional[int]  = None,
         *args,
         **kwargs,
     ):
@@ -94,6 +95,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             lr_schedule,
             net_arch,
             features_extractor_class=PointNetFeaturesExtractor,
+            features_extractor_kwargs={'input_features_dim': input_features_dim},
             *args,
             **kwargs,
         )

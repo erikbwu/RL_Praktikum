@@ -27,21 +27,23 @@ log = logging.getLogger(__name__)
 def _make_env(use_color: bool = False):
     """Helper function to create a single environment. Put any logic here, but make sure to return a
     RolloutInfoWrapper."""
+
     def env_make():
         _env = LigatingLoopEnv(
             observation_type=ObservationType.RGBD,
-            render_mode=RenderMode.HUMAN,
+            render_mode=RenderMode.HEADLESS,
             action_type=ActionType.CONTINUOUS,
             image_shape=(256, 256),
             frame_skip=1,
             time_step=0.1,
             settle_steps=50,
         )
-        _env = SofaEnvPointCloudObservations(_env, max_expected_num_points=256*256, color=use_color)
+        _env = SofaEnvPointCloudObservations(_env, max_expected_num_points=256 * 256, color=use_color)
         _env = Monitor(_env)
         _env = TimeLimit(_env, max_episode_steps=500)
         _env = RolloutInfoWrapper(_env)
         return _env
+
     return env_make
 
 
@@ -59,7 +61,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     obs_array_shape = (65536, 3)
     observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
     policy = PointNetActorCriticPolicy(observation_space, env.action_space, learning_rate,
-                                       [256, 128])
+                                       [256, 128], input_features_dim=3 if use_color else 0)
 
     demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color)
 
