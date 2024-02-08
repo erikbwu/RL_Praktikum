@@ -10,51 +10,37 @@ from imitation.algorithms import bc
 from imitation.policies.serialize import save_stable_model
 from sofa_env.base import RenderMode
 from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
-from gymnasium.wrappers import TimeLimit
-from sofa_env.wrappers.point_cloud import PointCloudFromDepthImageObservationWrapper
 
-from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from policy.PointNetActorCritic import PointNetActorCriticPolicy
 from util.data import npz_to_transitions
 from util.evaluate_policy import evaluate_policy
-from util.wrappers import RolloutInfoWrapper, SofaEnvPointCloudObservations
+from util.make_env import make_env_func, make_vec_sofa_env
 
 log = logging.getLogger(__name__)
 
 
-def _make_env(use_color: bool = False):
-    """Helper function to create a single environment. Put any logic here, but make sure to return a
-    RolloutInfoWrapper."""
+def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
+           num_traj: int = 5, use_color: bool = False, evaluate_after: bool = False):
 
-    def env_make():
-        _env = LigatingLoopEnv(
+    path = '../../../sofa_env_demonstrations/ligating_loop'
+
+    if isinstance(learning_rate, float) or isinstance(learning_rate, int):
+        lr = learning_rate
+        learning_rate = lambda a: lr
+
+    ligating_loop_env = LigatingLoopEnv(
             observation_type=ObservationType.RGBD,
-            render_mode=RenderMode.HEADLESS,
+            render_mode=RenderMode.HUMAN,
             action_type=ActionType.CONTINUOUS,
             image_shape=(256, 256),
             frame_skip=1,
             time_step=0.1,
             settle_steps=50,
         )
-        _env = SofaEnvPointCloudObservations(_env, 220, max_expected_num_points=256 * 256, color=use_color)
-        _env = Monitor(_env)
-        _env = TimeLimit(_env, max_episode_steps=500)
-        _env = RolloutInfoWrapper(_env)
-        return _env
-
-    return env_make
-
-
-def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
-           num_traj: int = 5, use_color: bool = False, evaluate_after: bool = False):
-    if isinstance(learning_rate, float) or isinstance(learning_rate, int):
-        lr = learning_rate
-        learning_rate = lambda a: lr
-    m_env = _make_env(use_color)
+    m_env = make_env_func(ligating_loop_env, use_color)
     env = DummyVecEnv([m_env for _ in range(1)])
-    path = '../../../sofa_env_demonstrations/ligating_loop'
 
     rng = np.random.default_rng()
     obs_array_shape = (65536, 3)
@@ -73,20 +59,18 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         device='cuda',
         batch_size=batch_size,
     )
-    reward_before_training, _ = evaluate_policy(bc_trainer.policy, _make_env(use_color)(), 1)
+    reward_before_training, _ = evaluate_policy(bc_trainer.policy, make_vec_sofa_env(ligating_loop_env, use_color), 1)
 
     bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
     saved_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     save_stable_model(Path(f'./model/ligating_loop/{saved_time}.zip'), bc_trainer.policy)
     log.info('Finished training and saved model')
-    print('Saved model')
 
     if evaluate_after:
-        reward_after_training, _ = evaluate_policy(bc_trainer.policy, _make_env(use_color)(), 10)
+        reward_after_training, _ = evaluate_policy(bc_trainer.policy, make_env_func(ligating_loop_env, use_color)(), 10)
         log.info(f"Reward after training: {reward_after_training}")
-        print(f"Reward after training: {reward_after_training}")
 
-    print('done')
+    log.info('done')
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="local")

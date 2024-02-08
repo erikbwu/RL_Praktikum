@@ -61,6 +61,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         self.mlp = MLP([1024, 512, features_dim], norm=None)
 
     def forward(self, observations: Data) -> torch.Tensor:
+        print(type(observations), observations.is_cuda)
         if isinstance(observations, torch.Tensor):
             # num_points = torch.full((observations.shape[0],), 1)
             # batch = torch.repeat_interleave(
@@ -159,7 +160,6 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             )
 
         obs_tensor, vectorized_env = observation, False #todo changed
-
         with th.no_grad():
             actions = self._predict(obs_tensor, deterministic=deterministic)
         # Convert to numpy, and reshape to the original action shape

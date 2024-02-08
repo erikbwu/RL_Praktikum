@@ -1,9 +1,11 @@
+import time
+
 import numpy as np
 
 
 def evaluate_policy(
     model,
-    env,
+    env,  # vec_env with one environment
     n_eval_episodes: int = 10,
     deterministic: bool = True,
     render: bool = False,
@@ -59,16 +61,20 @@ def evaluate_policy(
 
     current_rewards = np.zeros(n_envs)
     current_lengths = np.zeros(n_envs, dtype="int")
-    observations, infos = env.reset()
+    observations = env.reset()
+
     states = None
     episode_starts = np.ones((1,), dtype=bool)
 
     while (episode_counts < episode_count_targets).any():
+        start = time.perf_counter()
         actions, _ = model.predict(
-            observations
+            observations[0]  # only take the first one (since there is only one env)
         )
-        new_observations, rewards, dones, truncated, infos = env.step(actions)
-
+        prediction_time = time.perf_counter()
+        print(f'Prediction time: {prediction_time-start}')
+        new_observations, rewards, dones, infos = env.step(actions)
+        print(new_observations.shape)
         current_rewards += rewards
         current_lengths += 1
         for i in range(n_envs):
@@ -82,7 +88,7 @@ def evaluate_policy(
                 if callback is not None:
                     callback(locals(), globals())
 
-                if dones or truncated:
+                if dones:
                     if is_monitor_wrapped:
                         # Atari wrapper can send a "done" signal when
                         # the agent loses a life, but it does not correspond
