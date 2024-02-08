@@ -67,8 +67,8 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     n_run = 0
     while True:
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
-        save_stable_model(Path(f'./model/ligating_loop'), bc_trainer.policy, f'{start_time}_run_{n_run}')
-        log.info('Finished training and saved model')
+        save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
+        log.info('Finished run and saved model')
 
         reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
         wandb.log({"reward": reward_after_training})

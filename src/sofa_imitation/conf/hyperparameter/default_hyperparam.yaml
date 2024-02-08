@@ -1,6 +1,6 @@
 batch_size: 512
 learning_rate: 1e-4
 number_trajectories: 500
-number_epochs: -1
+number_epochs: 50
 use_color: true
 number_evaluations: 20
