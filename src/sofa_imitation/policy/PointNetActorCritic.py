@@ -53,7 +53,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(self, observation_space: spaces.Box, features_dim: int = 256, input_features_dim: int = 0):
+    def __init__(self, observation_space: spaces.Box, features_dim: int = 256):
         super().__init__(observation_space, features_dim)
 
         # Input channels account for both `pos` and node features.
@@ -96,7 +96,6 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             action_space: spaces.Space,
             lr_schedule: Callable[[float], float],
             net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
-            input_features_dim: Optional[int] = None,
             *args,
             **kwargs,
     ):

@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
-           num_traj: int = 5, use_color: bool = False, evaluate_after: bool = False):
+           num_traj: int = 5, use_color: bool = False, evaluate: bool = False):
 
     path = '../../../sofa_env_demonstrations/ligating_loop'
 
@@ -59,15 +59,16 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         device='cuda',
         batch_size=batch_size,
     )
-    reward_before_training, _ = evaluate_policy(bc_trainer.policy, make_vec_sofa_env(ligating_loop_env, use_color), 3)
-    log.info(f"Reward before training: {reward_before_training}")
+    if evaluate:
+        reward_before_training, _ = evaluate_policy(bc_trainer.policy, make_vec_sofa_env(ligating_loop_env, use_color), 3)
+        log.info(f"Reward before training: {reward_before_training}")
 
     bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
     saved_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     save_stable_model(Path(f'./model/ligating_loop'), bc_trainer.policy, saved_time)
     log.info('Finished training and saved model')
 
-    if evaluate_after:
+    if evaluate:
         reward_after_training, _ = evaluate_policy(bc_trainer.policy, make_env_func(ligating_loop_env, use_color)(), 20)
         log.info(f"Reward after training: {reward_after_training}")
 
@@ -86,7 +87,9 @@ def hydra_run(cfg: DictConfig):
     bs = cfg.hyperparameter.batch_size
     num_traj = cfg.hyperparameter.number_trajectories
     use_color = cfg.hyperparameter.use_color
-    run_bc(bs, lr, n_epochs, num_traj, use_color)
+    evaluate = cfg.hyperparameter.evaluate
+
+    run_bc(bs, lr, n_epochs, num_traj, use_color, evaluate)
 
 
 if __name__ == "__main__":
