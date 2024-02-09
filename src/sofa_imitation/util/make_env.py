@@ -4,7 +4,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-from .wrappers import RolloutInfoWrapper, SofaEnvPointCloudObservations
+from .wrappers import RolloutInfoWrapper, SofaEnvPointCloudObservations, WatchdogVecEnv
 
 
 def make_env(sofa_env: SofaEnv, use_color: bool = False):
@@ -30,5 +30,4 @@ def make_env_func(sofa_env: SofaEnv, use_color: bool = False):
 
 
 def make_vec_sofa_env(sofa_env: SofaEnv, use_color: bool = False):
-    env_kwargs = {'sofa_env': sofa_env, 'use_color': use_color}
-    return make_vec_env(make_env, n_envs=1, env_kwargs=env_kwargs, vec_env_cls=SubprocVecEnv)
+    return WatchdogVecEnv([make_env_func(sofa_env, use_color)], step_timeout_sec=45)
