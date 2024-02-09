@@ -3,4 +3,4 @@ learning_rate: 1e-4
 number_trajectories: 500
 number_epochs: 50
 use_color: true
-number_evaluations: 10
+number_evaluations: 5
