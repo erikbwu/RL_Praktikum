@@ -74,7 +74,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         reward_after_training, std_reward = evaluate_policy(bc_trainer.policy, env, n_eval)
         wandb.log({"reward": reward_after_training, "std_reward": std_reward, "epoch": n_run*num_epoch})
         log.info(f"Reward after training run {n_run}: {reward_after_training}")
-
+        n_run += 1
     log.info('done')
 
 
