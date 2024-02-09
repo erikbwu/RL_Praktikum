@@ -4,8 +4,7 @@ import torch
 
 ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
 
-def display3d():
-    path = f'{ligating_loop_path}/LigatingLoopEnv_5.npz'
+def display3d(path):
     npz_data = np.load(path)
     print(len(npz_data['rgb']))
 
@@ -59,4 +58,5 @@ def get_z_fars(num=100):
 
 
 if __name__ == '__main__':
-    display3d()
+    path = f'{ligating_loop_path}/LigatingLoopEnv_5.npz'
+    display3d(path)

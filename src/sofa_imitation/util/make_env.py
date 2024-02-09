@@ -7,10 +7,10 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from .wrappers import RolloutInfoWrapper, SofaEnvPointCloudObservations, WatchdogVecEnv
 
 
-def make_env(sofa_env: SofaEnv, use_color: bool = False):
-    env = SofaEnvPointCloudObservations(sofa_env, 220, max_expected_num_points=256 * 256, color=use_color)
+def make_env(sofa_env: SofaEnv, use_color: bool = False, max_episode_steps=500, depth_cutoff: int = None):
+    env = SofaEnvPointCloudObservations(sofa_env, depth_cutoff, max_expected_num_points=256 * 256, color=use_color)
     env = Monitor(env)
-    env = TimeLimit(env, max_episode_steps=500)
+    env = TimeLimit(env, max_episode_steps=max_episode_steps)
     env = RolloutInfoWrapper(env)
     return env
 
@@ -30,4 +30,4 @@ def make_env_func(sofa_env: SofaEnv, use_color: bool = False):
 
 
 def make_vec_sofa_env(sofa_env: SofaEnv, use_color: bool = False):
-    return WatchdogVecEnv([make_env_func(sofa_env, use_color)], step_timeout_sec=45)
+    return WatchdogVecEnv([lambda _: make_env(sofa_env, use_color, 500, 220)], step_timeout_sec=45)

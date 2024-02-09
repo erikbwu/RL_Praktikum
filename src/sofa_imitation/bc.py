@@ -11,7 +11,6 @@ from imitation.policies.serialize import save_stable_model
 from sofa_env.base import RenderMode
 from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
 
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from policy.PointNetActorCritic import PointNetActorCriticPolicy
 from util.data import npz_to_transitions
