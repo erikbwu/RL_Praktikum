@@ -61,17 +61,18 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         batch_size=batch_size,
     )
 
-    reward_before_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
+    reward_before_training, _ = evaluate_policy(bc_trainer.policy, env, 1)
     log.info(f"Reward before training: {reward_before_training}")
+    wandb.log({"reward": reward_before_training, 'epoch': 0})
 
-    n_run = 0
+    n_run = 1
     while True:
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
         save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
 
-        reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval)
-        wandb.log({"reward": reward_after_training})
+        reward_after_training, std_reward = evaluate_policy(bc_trainer.policy, env, n_eval)
+        wandb.log({"reward": reward_after_training, "std_reward": std_reward, "epoch": n_run*num_epoch})
         log.info(f"Reward after training run {n_run}: {reward_after_training}")
 
     log.info('done')
@@ -94,7 +95,7 @@ def hydra_run(cfg: DictConfig):
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg))
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
-
+    wandb.finish()
 
 if __name__ == "__main__":
     hydra_run()
