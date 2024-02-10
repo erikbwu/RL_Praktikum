@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Optional, Union, Tuple, List, Dict
+from typing import Callable, Optional, Union, Tuple, List, Dict, Type
 
 import torch
 import torch as th
@@ -9,7 +9,7 @@ from gymnasium import spaces
 #from processing.view_pointcloud import display_array
 from torch_geometric.transforms import GridSampling
 
-from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.policies import ActorCriticPolicy, SelfBaseModel
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from torch_geometric.data import Data
 from torch_geometric.nn import PointNetConv, fps, radius, global_max_pool, MLP
@@ -202,3 +202,26 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
         features = self.pi_features_extractor(obs)  # super().extract_features(obs, self.pi_features_extractor)
         latent_pi = self.mlp_extractor.forward_actor(features)
         return self._get_action_dist_from_latent(latent_pi)
+
+    def load(cls: Type[SelfBaseModel], path: str, device: Union[th.device, str] = "auto") -> SelfBaseModel:
+        """
+        Load model from path.
+
+        :param path:
+        :param device: Device on which the policy should be loaded.
+        :return:
+        """
+        device = th.device(device)
+
+        # Cuda not available
+        if device.type == th.device("cuda").type and not th.cuda.is_available():
+            device = th.device("cpu")
+
+        saved_variables = th.load(path, map_location=device)
+
+        # Create policy object
+        model = cls(**saved_variables["data"])
+        # Load weights
+        model.load_state_dict(saved_variables["state_dict"])
+        model.to(device)
+        return model

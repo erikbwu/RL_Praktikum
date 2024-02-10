@@ -29,21 +29,19 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
-        learning_rate = lambda a: lr
+        learning_rate = lambda _: lr
 
     env = get_env('ligating_loop', False)
 
     rng = np.random.default_rng()
-    obs_array_shape = (65536, 3)
-    observation_space = Box(low=float('-inf'), high=float('inf'), shape=obs_array_shape, dtype='float32')
-    policy = PointNetActorCriticPolicy(observation_space, env.action_space, learning_rate, [256, 128])
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128])
 
     demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color)
 
     log.info('Finished loading train data')
 
     bc_trainer = bc.BC_Pyg(
-        observation_space=observation_space,
+        observation_space=env.observation_space,
         action_space=env.action_space,
         demonstrations=demos,
         policy=policy,
@@ -84,7 +82,7 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg))
+    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"))
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()
