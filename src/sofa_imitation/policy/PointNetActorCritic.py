@@ -6,7 +6,7 @@ import torch as th
 import numpy as np
 from gymnasium import spaces
 
-#from processing.view_pointcloud import display_array
+from processing.view_pointcloud import display_array
 from torch_geometric.transforms import GridSampling
 
 from stable_baselines3.common.policies import ActorCriticPolicy, SelfBaseModel
@@ -79,7 +79,9 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
                 else:
                     observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
                         observations.device)
-        observations = self.grid_sampling(observations)
+        #display_array(observations.pos.cpu(), observations.x.cpu())
+        if len(observations.pos) > 5000:
+            observations = self.grid_sampling(observations)
         #display_array(observations.pos.cpu(), observations.x.cpu())
         sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)

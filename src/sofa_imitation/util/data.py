@@ -9,6 +9,7 @@ from torch_geometric.transforms import GridSampling
 from tqdm import tqdm
 
 from processing.convertPointcloudNumpy import convertRGBDtoNumpy
+from processing.view_pointcloud import display_array
 
 
 def npz_to_traj(n_traj: 500):
@@ -80,7 +81,7 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) 
     next_obs = []
     actions = []
     dones = []
-    grid_sampling = GridSampling(size=0.1)  # 3 ~> 1100, 2.5 ~> 1500
+    grid_sampling = GridSampling(size=0.3)  # 0.003 ~> 1100, 0,0025 ~> 1500
 
     print(f'Loading Transitions from {npz_path}')
     for i in range(n_traj):
@@ -106,13 +107,15 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) 
             depth = np.where(depth >= z_far, 0, depth)
 
             pcds, colors = convertRGBDtoNumpy(rgb, depth, intrinsics)
+            pcds *= 100
             if useColor:
-                data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds), x=colors)
+                data = Data(pos=torch.from_numpy(pcds), batch=torch.full((len(pcds),), 0), x=torch.from_numpy(colors))
             else:
-                data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds))
-            print(data.pos.shape)
+                data = Data(pos=torch.from_numpy(pcds), batch=torch.full((len(pcds),), 0))
             data = grid_sampling(data)
-            print(data.pos.shape)
+
+            # display_array(data.pos, data.x)
+
             if timestep == 0:
                 obs.append(data)
             elif timestep == len(rgbs) - 1:
