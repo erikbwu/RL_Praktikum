@@ -83,7 +83,7 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) 
     grid_sampling = GridSampling(size=0.1)  # 3 ~> 1100, 2.5 ~> 1500
 
     print(f'Loading Transitions from {npz_path}')
-    for i in tqdm(range(n_traj)):
+    for i in range(n_traj):
         npz_data = np.load(f'{npz_path}/{prefix}{i}.npz')
         
         width = npz_data['metadata.camera.width']

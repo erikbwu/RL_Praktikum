@@ -11,8 +11,8 @@ from imitation.policies.serialize import save_stable_model
 from sofa_env.base import RenderMode
 from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
 
-
 from policy.PointNetActorCritic import PointNetActorCriticPolicy
+from util.env_from_string import get_env
 from util.data import npz_to_transitions
 from util.evaluate_policy import evaluate_policy
 from util.make_env import make_vec_sofa_env
@@ -23,25 +23,15 @@ log = logging.getLogger(__name__)
 
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
-
     path = '../../../sofa_env_demonstrations/ligating_loop'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
+    Path(f'./model/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
         learning_rate = lambda a: lr
 
-
-    ligating_loop_env = LigatingLoopEnv(
-            observation_type=ObservationType.RGBD,
-            render_mode=RenderMode.HEADLESS,
-            action_type=ActionType.CONTINUOUS,
-            image_shape=(256, 256),
-            frame_skip=1,
-            time_step=0.1,
-            settle_steps=50,
-        )
-    env = make_vec_sofa_env(ligating_loop_env, use_color)
+    env = get_env('ligating_loop', False)
 
     rng = np.random.default_rng()
     obs_array_shape = (65536, 3)
@@ -49,6 +39,8 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     policy = PointNetActorCriticPolicy(observation_space, env.action_space, learning_rate, [256, 128])
 
     demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color)
+
+    log.info('Finished loading train data')
 
     bc_trainer = bc.BC_Pyg(
         observation_space=observation_space,
@@ -67,11 +59,12 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     n_run = 1
     while True:
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
-        save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
+        bc_trainer.policy.save(f'./model/ligating_loop/{start_time}/run_{n_run}')
+        #save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
 
         reward_after_training, std_reward = evaluate_policy(bc_trainer.policy, env, n_eval)
-        wandb.log({"reward": reward_after_training, "std_reward": std_reward, "epoch": n_run*num_epoch})
+        wandb.log({"reward": reward_after_training, "std_reward": std_reward, "epoch": n_run * num_epoch})
         log.info(f"Reward after training run {n_run}: {reward_after_training}")
         n_run += 1
     log.info('done')
@@ -95,6 +88,7 @@ def hydra_run(cfg: DictConfig):
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()
+
 
 if __name__ == "__main__":
     hydra_run()

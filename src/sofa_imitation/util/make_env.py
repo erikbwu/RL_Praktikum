@@ -30,4 +30,4 @@ def make_env_func(sofa_env: SofaEnv, use_color: bool = False):
 
 
 def make_vec_sofa_env(sofa_env: SofaEnv, use_color: bool = False):
-    return WatchdogVecEnv([lambda _: make_env(sofa_env, use_color, 500, 220)], step_timeout_sec=45)
+    return WatchdogVecEnv([lambda : make_env(sofa_env, use_color, 500, 220)], step_timeout_sec=45)

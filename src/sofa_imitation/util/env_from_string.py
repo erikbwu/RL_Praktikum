@@ -2,7 +2,11 @@ from gymnasium import Env
 from sofa_env.base import RenderMode
 import numpy as np
 
-def get_env(env_name: str, should_render: bool = False) -> Env:
+from .make_env import make_env
+from .wrappers import WatchdogVecEnv
+
+
+def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
     render_mode = RenderMode.HUMAN if should_render else RenderMode.HEADLESS
     image_shape = (256,256)
 
@@ -17,7 +21,20 @@ def get_env(env_name: str, should_render: bool = False) -> Env:
             frame_skip=2,
             time_step=0.1,
             settle_steps=50,
+            reward_amount_dict={
+                "distance_loop_to_marking_center": -0.05,
+                "delta_distance_loop_to_marking_center": -100.0,
+                "loop_center_in_cavity": 0.00,
+                "instrument_not_in_cavity": -0.0,
+                "instrument_shaft_collisions": -0.0,
+                "loop_marking_overlap": 0.8,
+                "loop_closed_around_marking": 0.5,
+                "loop_closed_in_thin_air": -0.1,
+                "successful_task": 100.0,
+            }
         )
+        env = make_env(env, use_color, 500, 220)
+        return WatchdogVecEnv([lambda : env], step_timeout_sec=45)
 
     elif env_name == 'pick_and_place':
         from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, ObservationType, ActionType
