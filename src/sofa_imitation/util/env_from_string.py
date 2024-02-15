@@ -14,7 +14,7 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
         from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
 
         env = LigatingLoopEnv(
-            observation_type=ObservationType.RGBD,
+            observation_type=ObservationType.RGB,
             render_mode=render_mode,
             action_type=ActionType.CONTINUOUS,
             image_shape=image_shape,
@@ -24,7 +24,7 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
             reward_amount_dict={
                 "distance_loop_to_marking_center": -0.05,
                 "delta_distance_loop_to_marking_center": -100.0,
-                "loop_center_in_cavity": 0.00,
+                "loop_center_in_cavity": 0.01,
                 "instrument_not_in_cavity": -0.0,
                 "instrument_shaft_collisions": -0.0,
                 "loop_marking_overlap": 0.8,
@@ -40,7 +40,7 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
         from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, ObservationType, ActionType
 
         env = PickAndPlaceEnv(
-            observation_type=ObservationType.RGBD,
+            observation_type=ObservationType.RGB,
             render_mode=render_mode,
             action_type=ActionType.CONTINUOUS,
             image_shape=image_shape,
@@ -66,7 +66,7 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
         from sofa_env.scenes.rope_cutting import RopeCuttingEnv, ObservationType, ActionType
 
         env = RopeCuttingEnv(
-            observation_type=ObservationType.RGBD,
+            observation_type=ObservationType.RGB,
             render_mode=render_mode,
             action_type=ActionType.CONTINUOUS,
             image_shape=image_shape,
