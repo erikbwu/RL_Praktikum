@@ -5,17 +5,12 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
-from gymnasium.spaces import Box
 from imitation.algorithms import bc
-from imitation.policies.serialize import save_stable_model
-from sofa_env.base import RenderMode
-from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
 
 from policy.PointNetActorCritic import PointNetActorCriticPolicy
 from util.env_from_string import get_env
 from util.data import npz_to_transitions
 from util.evaluate_policy import evaluate_policy
-from util.make_env import make_vec_sofa_env
 import wandb
 
 log = logging.getLogger(__name__)
@@ -70,8 +65,6 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
 
 @hydra.main(version_base=None, config_path="conf", config_name="local")
 def hydra_run(cfg: DictConfig):
-    # env = submitit.JobEnvironment()
-    # log.info(f"Process ID {os.getpid()} executing task {cfg.task}, with {env}")
     log.info(OmegaConf.to_yaml(cfg))
     lr = cfg.hyperparameter.learning_rate
     n_epochs = cfg.hyperparameter.number_epochs

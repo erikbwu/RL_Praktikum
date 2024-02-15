@@ -2,6 +2,8 @@ from gymnasium import Env
 from sofa_env.base import RenderMode
 import numpy as np
 
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from .make_env import make_env
 from .wrappers import WatchdogVecEnv
 
@@ -36,6 +38,34 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
         env = make_env(env, use_color, 500, 220)
         return WatchdogVecEnv([lambda : env], step_timeout_sec=45)
 
+    elif env_name == 'rope_cutting':
+        from sofa_env.scenes.rope_cutting.rope_cutting_env import RopeCuttingEnv, ObservationType, ActionType
+
+        env = RopeCuttingEnv(
+            observation_type=ObservationType.RGB,
+            render_mode=render_mode,
+            action_type=ActionType.CONTINUOUS,
+            image_shape=image_shape,
+            frame_skip=1,
+            time_step=0.1,
+            settle_steps=10,
+            settle_step_dt=0.01,
+            reward_amount_dict={
+                "distance_cauter_active_rope": -0.0,
+                "delta_distance_cauter_active_rope": -5.0,
+                "cut_active_rope": 5.0,
+                "cut_inactive_rope": -5.0,
+                "workspace_violation": -0.0,
+                "state_limits_violation": -0.0,
+                "successful_task": 10.0,
+                "failed_task": -20.0,
+            },
+        )
+        env = make_env(env, use_color, 400)
+        return env
+        return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=DummyVecEnv)
+
     elif env_name == 'pick_and_place':
         from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, ObservationType, ActionType
 
@@ -60,20 +90,6 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
             only_learn_pick=False,
             minimum_lift_height=50.0,
             randomize_torus_position=False,
-        )
-
-    elif env_name == 'pick_and_place':
-        from sofa_env.scenes.rope_cutting import RopeCuttingEnv, ObservationType, ActionType
-
-        env = RopeCuttingEnv(
-            observation_type=ObservationType.RGB,
-            render_mode=render_mode,
-            action_type=ActionType.CONTINUOUS,
-            image_shape=image_shape,
-            frame_skip=1,
-            time_step=0.1,
-            settle_steps=10,
-            settle_step_dt=0.01,
         )
 
 
