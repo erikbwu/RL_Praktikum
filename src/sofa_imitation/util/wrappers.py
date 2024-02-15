@@ -219,7 +219,8 @@ class SofaEnvPointCloudObservations(gym.ObservationWrapper):
                 depth_scale=1.0,
                 # depth_trunc=depth_cutoff,
             )
-
+        # new: orient right way
+        pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
         return pcd
 
 
