@@ -61,13 +61,13 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
                 "failed_task": -20.0,
             },
         )
-        env = make_env(env, use_color, 400)
+        env = make_env(env, use_color, 400, depth_cutoff=245)
         return env
         return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
         return make_vec_env(lambda : env, n_envs=1, vec_env_cls=DummyVecEnv)
 
     elif env_name == 'pick_and_place':
-        from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, ObservationType, ActionType
+        from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, Phase, ObservationType, ActionType
 
         env = PickAndPlaceEnv(
             observation_type=ObservationType.RGB,
@@ -90,7 +90,39 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
             only_learn_pick=False,
             minimum_lift_height=50.0,
             randomize_torus_position=False,
+            reward_amount_dict={
+                Phase.ANY: {
+                    "lost_grasp": -30.0,
+                    "grasped_torus": 0.0,
+                    "gripper_jaw_peg_collisions": -0.01,
+                    "gripper_jaw_floor_collisions": -0.01,
+                    "unstable_deformation": -0.01,
+                    "torus_velocity": -0.0,
+                    "gripper_velocity": -0.0,
+                    "torus_dropped_off_board": -0.0,
+                    "action_violated_state_limits": -0.0,
+                    "action_violated_cartesian_workspace": -0.0,
+                    "successful_task": 50.0,
+                },
+                Phase.PICK: {
+                    "established_grasp": 30.0,
+                    "gripper_distance_to_torus_center": -0.0,
+                    "delta_gripper_distance_to_torus_center": -0.0,
+                    "gripper_distance_to_torus_tracking_points": -0.0,
+                    "delta_gripper_distance_to_torus_tracking_points": -10.0,
+                    "distance_to_minimum_pick_height": -0.0,
+                    "delta_distance_to_minimum_pick_height": -50.0,
+                },
+                Phase.PLACE: {
+                    "torus_distance_to_active_pegs": -0.0,
+                    "delta_torus_distance_to_active_pegs": -100.0,
+                },
+            },
         )
+        env = make_env(env, use_color, 600, depth_cutoff=350)
+
+        #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
 
 
