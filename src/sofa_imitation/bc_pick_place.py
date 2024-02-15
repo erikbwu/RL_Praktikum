@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
     path = '../../../sofa_env_demonstrations/ligating_loop'
+    path = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     Path(f'./model/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
 
@@ -26,12 +27,12 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env('ligating_loop', False)
+    env = get_env('pick_and_place', True)
 
     rng = np.random.default_rng()
     policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128])
 
-    demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color)
+    demos = npz_to_transitions(path, 'PickAndPlaceEnv_', num_traj, use_color)
 
     log.info('Finished loading train data')
 

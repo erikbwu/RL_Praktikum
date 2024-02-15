@@ -22,9 +22,8 @@ ToDO:
 - add to pointcloudwrapper to return colors too, maybe change code?
 - add more logging info
 
-dataset bigger than memory
-hyperparameter bc
-other imitation algorithms
+horizon
+load_model
 
 
 partition -> gpu_4
