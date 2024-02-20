@@ -30,9 +30,9 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
     env = get_env(env_name, True)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128])
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 2)
 
-    demos = npz_to_transitions(path, 'PickAndPlaceEnv_', num_traj, use_color)
+    demos = npz_to_transitions(path, 'PickAndPlaceEnv_', num_traj, use_color, 0.002)
 
     log.info('Finished loading train data')
 
@@ -46,9 +46,9 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
         batch_size=batch_size,
     )
 
-    # reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
-    # log.info(f"Reward before training: {reward_before_training}")
-    # wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
+    reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
+    log.info(f"Reward before training: {reward_before_training}")
+    wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
 
     n_run = 1
     while True:

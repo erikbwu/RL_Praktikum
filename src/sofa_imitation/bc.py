@@ -29,13 +29,13 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     env = get_env('ligating_loop', False)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128])
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 1)
 
-    demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color)
+    demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color, 0.001)
 
     log.info('Finished loading train data')
 
-    bc_trainer = bc.BC_Pyg(
+    bc_trainer = bc.BC_Pyg( 
         observation_space=env.observation_space,
         action_space=env.action_space,
         demonstrations=demos,
@@ -45,9 +45,9 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         batch_size=batch_size,
     )
 
-    # reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
-    # log.info(f"Reward before training: {reward_before_training}")
-    # wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
+    reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
+    log.info(f"Reward before training: {reward_before_training}")
+    wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
 
     n_run = 1
     while True:
@@ -75,7 +75,7 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"))
+    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='increased pointcloud size')
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()

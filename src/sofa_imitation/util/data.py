@@ -5,8 +5,10 @@ import open3d as o3d
 import torch
 from imitation.data.types import Trajectory, Transitions
 from torch_geometric.data import Data
+from torch_geometric.transforms import GridSampling
 from tqdm import tqdm
 
+from processing.view_pointcloud import display_array
 from processing.convertPointcloudNumpy import convertRGBDtoNumpy
 
 
@@ -74,16 +76,18 @@ def make_transitions(n_traj=10, start=0):
     return Transitions(obs, np.asarray(actions), np.array([{}] * len(actions)), next_obs, np.asarray(dones))
 
 
-def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) -> Transitions:
+def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool, grid_size=0.3) -> Transitions:
     obs = []
     next_obs = []
     actions = []
     dones = []
 
+    grid_sampling = GridSampling(grid_size)  # 0.003 ~> 1100, 0,0025 ~> 1500 (ligating loop)
+
     print(f'Loading Transitions from {npz_path}')
     for i in range(n_traj):
         npz_data = np.load(f'{npz_path}/{prefix}{i}.npz')
-        
+
         width = npz_data['metadata.camera.width']
         height = npz_data['metadata.camera.height']
         focal_x = npz_data['metadata.camera.focal_x']
@@ -104,11 +108,14 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool) 
             depth = np.where(depth >= z_far, 0, depth)
 
             pcds, colors = convertRGBDtoNumpy(rgb, depth, intrinsics)
-            if useColor:
-                data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds), x=colors)
-            else:
-                data = Data(pos=torch.from_numpy(pcds), num_nodes=len(pcds))
 
+            if useColor:
+                data = Data(pos=torch.from_numpy(pcds), batch=torch.full((len(pcds),), 0), x=torch.from_numpy(colors))
+            else:
+                data = Data(pos=torch.from_numpy(pcds), batch=torch.full((len(pcds),), 0))
+            data = grid_sampling(data)
+
+            # display_array(data.pos, data.x)
             if timestep == 0:
                 obs.append(data)
             elif timestep == len(rgbs) - 1:

@@ -6,7 +6,7 @@ import torch as th
 import numpy as np
 from gymnasium import spaces
 
-#from processing.view_pointcloud import display_array
+from processing.view_pointcloud import display_array
 from torch_geometric.transforms import GridSampling
 
 from stable_baselines3.common.policies import ActorCriticPolicy, SelfBaseModel
@@ -53,7 +53,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(self, observation_space: spaces.Box, features_dim: int = 256):
+    def __init__(self, observation_space: spaces.Box, grid_size: int, features_dim: int = 256):
         super().__init__(observation_space, features_dim)
 
         # Input channels account for both `pos` and node features.
@@ -62,7 +62,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024]))
 
         self.mlp = MLP([1024, 512, features_dim], norm=None)
-        self.grid_sampling = GridSampling(size=2.5)  #3 ~> 1100, 2.5 ~> 1500
+        self.grid_sampling = GridSampling(grid_size)  #3 ~> 1100, 2.5 ~> 1500
 
     def forward(self, observations: Data) -> torch.Tensor:
         if isinstance(observations, torch.Tensor):
@@ -73,8 +73,10 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
                 else:
                     observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
                         observations.device)
-        observations = self.grid_sampling(observations)
         #display_array(observations.pos.cpu(), observations.x.cpu())
+        if len(observations.pos) > 5000:
+            observations = self.grid_sampling(observations)
+        display_array(observations.pos.cpu(), observations.x.cpu())
         sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
@@ -90,6 +92,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             action_space: spaces.Space,
             lr_schedule: Callable[[float], float],
             net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
+            grid_size: int = 2.5,
             *args,
             **kwargs,
     ):
@@ -101,6 +104,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             lr_schedule,
             net_arch,
             features_extractor_class=PointNetFeaturesExtractor,
+            features_extractor_kwargs={"grid_size": grid_size},
             *args,
             **kwargs,
         )
