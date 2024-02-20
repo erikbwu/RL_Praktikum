@@ -76,7 +76,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         #display_array(observations.pos.cpu(), observations.x.cpu())
         if len(observations.pos) > 5000:
             observations = self.grid_sampling(observations)
-        display_array(observations.pos.cpu(), observations.x.cpu())
+        #display_array(observations.pos.cpu(), observations.x.cpu())
         sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
