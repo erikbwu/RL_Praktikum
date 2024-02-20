@@ -52,11 +52,12 @@ def display_array(pcd_array, colors = None):
 
 def get_z_fars(num=100):
     for i in range(num):
-        path = f'{ligating_loop_path}/LigatingLoopEnv_{i}.npz'
+        path = f'/media/erik/Volume/sofa_env_demonstrations/rope_cutting/RopeCuttingEnv_{i}.npz'
         npz_data = np.load(path)
         print(npz_data['metadata.camera.z_far'])
 
 
 if __name__ == '__main__':
-    path = f'{ligating_loop_path}/LigatingLoopEnv_5.npz'
-    display3d(path)
+    # path = f'{ligating_loop_path}/LigatingLoopEnv_5.npz'
+    # display3d(path)
+    get_z_fars(100)

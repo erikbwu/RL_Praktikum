@@ -50,21 +50,21 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
             time_step=0.1,
             settle_steps=10,
             settle_step_dt=0.01,
-            reward_amount_dict={
-                "distance_cauter_active_rope": -0.0,
-                "delta_distance_cauter_active_rope": -5.0,
-                "cut_active_rope": 5.0,
-                "cut_inactive_rope": -5.0,
-                "workspace_violation": -0.0,
-                "state_limits_violation": -0.0,
-                "successful_task": 10.0,
-                "failed_task": -20.0,
-            },
+            # reward_amount_dict={
+            #     "distance_cauter_active_rope": -0.0,
+            #     "delta_distance_cauter_active_rope": -5.0,
+            #     "cut_active_rope": 5.0,
+            #     "cut_inactive_rope": -5.0,
+            #     "workspace_violation": -0.0,
+            #     "state_limits_violation": -0.0,
+            #     "successful_task": 10.0,
+            #     "failed_task": -20.0,
+            # },
         )
         env = make_env(env, use_color, 400, depth_cutoff=245)
         return env
-        return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
-        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=DummyVecEnv)
+        # return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
     elif env_name == 'pick_and_place':
         from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, Phase, ObservationType, ActionType

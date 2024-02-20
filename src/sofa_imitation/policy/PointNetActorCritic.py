@@ -66,12 +66,6 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
 
     def forward(self, observations: Data) -> torch.Tensor:
         if isinstance(observations, torch.Tensor):
-            # num_points = torch.full((observations.shape[0],), 1)
-            # batch = torch.repeat_interleave(
-            #     torch.arange(len(num_points), device=num_points.device),
-            #     repeats=num_points,
-            # )
-            # flattened_observations = torch.flatten(observations, end_dim=1)
             if len(observations.shape) == 2:  # only handles one array observation
                 if observations.shape[-1] != 3: # has color
                     observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
@@ -99,6 +93,8 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             *args,
             **kwargs,
     ):
+        kwargs.pop('features_extractor_class', None)
+
         super().__init__(
             observation_space,
             action_space,
@@ -203,6 +199,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
         latent_pi = self.mlp_extractor.forward_actor(features)
         return self._get_action_dist_from_latent(latent_pi)
 
+    @classmethod
     def load(cls: Type[SelfBaseModel], path: str, device: Union[th.device, str] = "auto") -> SelfBaseModel:
         """
         Load model from path.
@@ -211,14 +208,17 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
         :param device: Device on which the policy should be loaded.
         :return:
         """
+        # Cuda by default
+        if device == "auto":
+            device = "cuda"
+
         device = th.device(device)
 
         # Cuda not available
         if device.type == th.device("cuda").type and not th.cuda.is_available():
-            device = th.device("cpu")
+            return th.device("cpu")
 
         saved_variables = th.load(path, map_location=device)
-
         # Create policy object
         model = cls(**saved_variables["data"])
         # Load weights
