@@ -26,7 +26,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env('ligating_loop', True)
+    env = get_env('ligating_loop', False)
 
     rng = np.random.default_rng()
     policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 1, 3 if use_color else 0)
@@ -51,7 +51,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
 
     n_run = 1
     while True:
-        bc_trainer.train(n_epochs=num_epoch, progress_bar=True)
+        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=250,)
         bc_trainer.policy.save(f'./model/ligating_loop/{start_time}/run_{n_run}')
         #save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
