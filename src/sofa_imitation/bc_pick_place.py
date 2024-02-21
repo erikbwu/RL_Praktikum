@@ -76,7 +76,7 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='pick and place, bigger net')
+    wandb.init(project="Imitation_Sofa_Pi   ckAndPlace", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='pick and place, bigger net')
 
     run_bc('pick_and_place', bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()
