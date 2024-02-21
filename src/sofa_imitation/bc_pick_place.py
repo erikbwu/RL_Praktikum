@@ -30,7 +30,7 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
     env = get_env(env_name, False)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32], 2)
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64], 2, 3 if use_color else 0)
 
     demos = npz_to_transitions(path, 'PickAndPlaceEnv_', num_traj, use_color, 0.002)
 
@@ -76,7 +76,7 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
 
-    wandb.init(project="Imitation_Sofa_Pi   ckAndPlace", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='pick and place, bigger net')
+    wandb.init(project="Imitation_Sofa_PickAndPlace", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='pick and place, bigger net')
 
     run_bc('pick_and_place', bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()

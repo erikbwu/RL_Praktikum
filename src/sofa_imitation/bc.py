@@ -26,10 +26,10 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env('ligating_loop', False)
+    env = get_env('ligating_loop', True)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 1)
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 1, 3 if use_color else 0)
 
     demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color, 0.001)
 

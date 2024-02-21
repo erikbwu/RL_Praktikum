@@ -53,36 +53,36 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(self, observation_space: spaces.Box, grid_size: int, features_dim: int = 256):
-        super().__init__(observation_space, features_dim)
+    def __init__(self, observation_space: spaces.Box, grid_size: float, inp_features_dim: int, out_features_dim: int = 256):
+        super().__init__(observation_space, out_features_dim)
 
         # Input channels account for both `pos` and node features.
-        self.sa1_module = SAModule(0.5, 0.2, MLP([3, 64, 64, 128]))
+        self.sa1_module = SAModule(0.5, 0.2, MLP([3 + inp_features_dim, 64, 64, 128]))
         self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3, 128, 128, 256]))
         self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024]))
 
-        self.mlp = MLP([1024, 512, features_dim], norm=None)
-        self.grid_sampling = GridSampling(grid_size)  #3 ~> 1100, 2.5 ~> 1500
+        self.mlp = MLP([1024, 512, out_features_dim], norm=None)
+        self.grid_sampling = GridSampling(grid_size)  # 3 ~> 1100, 2.5 ~> 1500
 
     def forward(self, observations: Data) -> torch.Tensor:
         if isinstance(observations, torch.Tensor):
-            if len(observations.shape) == 2:  # only handles one array observation
-                if observations.shape[-1] != 3: # has color
-                    observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
-                                        x=observations[:, 3:]).to(observations.device)
-                else:
-                    observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
-                        observations.device)
-        #display_array(observations.pos.cpu(), observations.x.cpu())
+            assert len(observations.shape) == 2  # only handles one array observation
+            if observations.shape[-1] != 3:  # has color
+                observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
+                                    x=observations[:, 3:]).to(observations.device)
+            else:
+                observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
+                    observations.device)
+        # display_array(observations.pos.cpu(), observations.x.cpu())
         if len(observations.pos) > 5000:
             observations = self.grid_sampling(observations)
-        #display_array(observations.pos.cpu(), observations.x.cpu())
-        sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
+        # display_array(observations.pos.cpu(), observations.x.cpu())
+        sa0_out = (observations.x.to(torch.float32), observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
         sa3_out = self.sa3_module(*sa2_out)
         x, pos, batch = sa3_out
-        return self.mlp(x).log_softmax(dim=-1)
+        return self.mlp(x)
 
 
 class PointNetActorCriticPolicy(ActorCriticPolicy):
@@ -92,7 +92,8 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             action_space: spaces.Space,
             lr_schedule: Callable[[float], float],
             net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
-            grid_size: int = 2.5,
+            grid_size: float = 2.5,
+            inp_features_dim: int = 3,
             *args,
             **kwargs,
     ):
@@ -104,7 +105,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             lr_schedule,
             net_arch,
             features_extractor_class=PointNetFeaturesExtractor,
-            features_extractor_kwargs={"grid_size": grid_size},
+            features_extractor_kwargs={"grid_size": grid_size, "inp_features_dim": inp_features_dim},
             *args,
             **kwargs,
         )
