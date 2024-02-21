@@ -66,21 +66,22 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
 
     def forward(self, observations: Data) -> torch.Tensor:
         if isinstance(observations, torch.Tensor):
-            if len(observations.shape) == 2:  # only handles one array observation
-                if observations.shape[-1] != 3: # has color
-                    observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
-                                        x=observations[:, 3:]).to(observations.device)
-                else:
-                    observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
-                        observations.device)
+            assert len(observations.shape) == 2  # only handles one array observation
+            if observations.shape[-1] != 3: # has color
+                observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
+                                    x=observations[:, 3:]).to(observations.device)
+            else:
+                observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
+                    observations.device)
+
         observations = self.grid_sampling(observations)
         #display_array(observations.pos.cpu(), observations.x.cpu())
-        sa0_out = (None, observations.pos.to(torch.float32), observations.batch)
+        sa0_out = (observations.x, observations.pos.to(torch.float32), observations.batch)
         sa1_out = self.sa1_module(*sa0_out)
         sa2_out = self.sa2_module(*sa1_out)
         sa3_out = self.sa3_module(*sa2_out)
         x, pos, batch = sa3_out
-        return self.mlp(x).log_softmax(dim=-1)
+        return self.mlp(x)
 
 
 class PointNetActorCriticPolicy(ActorCriticPolicy):
