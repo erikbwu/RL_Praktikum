@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
     path = '../../../sofa_env_demonstrations/pick_and_place'
-    path = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
+    #path = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     Path(f'./model/{env_name}/{start_time}/').mkdir(parents=True, exist_ok=True)
 
@@ -27,10 +27,10 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env(env_name, True)
+    env = get_env(env_name, False)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 2)
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32], 2)
 
     demos = npz_to_transitions(path, 'PickAndPlaceEnv_', num_traj, use_color, 0.002)
 
@@ -76,7 +76,7 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"))
+    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='pick and place, bigger net')
 
     run_bc('pick_and_place', bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()
