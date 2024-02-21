@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
+pick_and_place = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
 
 def display3d(path):
     npz_data = np.load(path)
@@ -58,6 +59,6 @@ def get_z_fars(num=100):
 
 
 if __name__ == '__main__':
-    # path = f'{ligating_loop_path}/LigatingLoopEnv_5.npz'
-    # display3d(path)
-    get_z_fars(100)
+    path = f'{pick_and_place}/PickAndPlaceEnv_2.npz'
+    display3d(path)
+   #get_z_fars(100)
