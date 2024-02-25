@@ -51,7 +51,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
 
     n_run = 1
     while True:
-        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=250,)
+        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=50,)
         bc_trainer.policy.save(f'./model/ligating_loop/{start_time}/run_{n_run}')
         #save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
