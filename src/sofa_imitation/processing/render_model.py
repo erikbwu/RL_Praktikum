@@ -12,6 +12,6 @@ def render_model(model_path: str, env_name: str):
 
 
 if __name__ == "__main__":
-    model_path = '/home/erik/policies/run_2'
+    model_path = '/home/erik/RL_Praktikum/src/sofa_imitation/model/ligating_loop/2024-02-24_01:47/run_15'
     render_model(model_path, 'ligating_loop')
 

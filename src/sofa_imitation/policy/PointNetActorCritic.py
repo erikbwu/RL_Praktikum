@@ -98,6 +98,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             **kwargs,
     ):
         kwargs.pop('features_extractor_class', None)
+        feature_extractor_kwargs = kwargs.pop('features_extractor_kwargs', {"grid_size": grid_size, "inp_features_dim": inp_features_dim})
 
         super().__init__(
             observation_space,
@@ -105,7 +106,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
             lr_schedule,
             net_arch,
             features_extractor_class=PointNetFeaturesExtractor,
-            features_extractor_kwargs={"grid_size": grid_size, "inp_features_dim": inp_features_dim},
+            features_extractor_kwargs=feature_extractor_kwargs,
             *args,
             **kwargs,
         )
