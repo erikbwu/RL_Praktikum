@@ -2,5 +2,5 @@ defaults:
   - slurm_base
 
 tasks_per_node: 32
-mem_gb: 150
+mem_gb: 200
 partition: gpu_8
