@@ -3,3 +3,5 @@
 /src/sofa_imitation/wandb/
 /Pointclouds/
 /src/sofa_imitation/model/
+/RL_Praktikum.code-workspace
+/src/sofa_imitation/testing.py
