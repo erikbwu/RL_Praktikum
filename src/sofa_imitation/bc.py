@@ -29,7 +29,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     env = get_env('ligating_loop', False)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128], 1, 3 if use_color else 0)
+    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32], 1, 3 if use_color else 0)
 
     demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color, 0.001)
 
@@ -43,6 +43,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         rng=rng,
         device='cuda',
         batch_size=batch_size,
+        optimizer_kwargs={'lr': learning_rate(0)}
     )
 
     reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
@@ -75,7 +76,8 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"), notes='increased pointcloud size')
+    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"),
+               notes='increased pointcloud size, fixed nn', tags=['nn=[256,128,64,32]', f'lr={lr}'])
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()
