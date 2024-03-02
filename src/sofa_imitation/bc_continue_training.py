@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
-    n_run = 17
+    n_run = 76
     start_time = '2024-02-24_01:47'
     path = '../../../sofa_env_demonstrations/ligating_loop'
     model_path = f'./model/ligating_loop/{start_time}/run_{n_run}'
@@ -47,11 +47,9 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         rng=rng,
         device='cuda',
         batch_size=batch_size,
+        optimizer_kwargs={}
     )
 
-    reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
-    log.info(f"Reward before training: {reward_before_training}")
-    wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
 
     while True:
         n_run += 1
