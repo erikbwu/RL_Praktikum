@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
     path = '../../../sofa_env_demonstrations/pick_and_place'
-    n_run = 41
+    n_run = 43
     start_time = '2024-02-29_09:24'
     model_path = f'./model/pick_and_place/{start_time}/run_{n_run}'
 
@@ -45,6 +45,7 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
         rng=rng,
         device='cuda',
         batch_size=batch_size,
+        optimizer_kwargs={'lr': learning_rate(0)}
     )
 
     reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
