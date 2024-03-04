@@ -23,7 +23,6 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     path = '../../../sofa_env_demonstrations/ligating_loop'
     model_path = f'./model/ligating_loop/{start_time}/run_{n_run}'
 
-    Path(f'./model/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
@@ -50,7 +49,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         optimizer_kwargs={}
     )
 
-
+    Path(f'./model/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
     while True:
         n_run += 1
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=50,)
