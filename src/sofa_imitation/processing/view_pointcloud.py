@@ -16,8 +16,15 @@ def display3d(path):
     z_near = npz_data['metadata.camera.z_near']
     z_far = npz_data['metadata.camera.z_far']
 
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
 
-    for timestep in range(5, len(npz_data['rgb']),20):
+    # geometry is the point cloud used in your animaiton
+    pcd = o3d.geometry.PointCloud()
+    vis.add_geometry(pcd)
+
+
+    for timestep in range(0, len(npz_data['rgb']), 5):
         print('timestep: ', timestep)
         rgb = npz_data['rgb'][timestep]
         depth = npz_data['depth'][timestep]
@@ -29,6 +36,9 @@ def display3d(path):
 
         rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color_image, depth_image,
                                                                         convert_rgb_to_intensity=False)
+
+        vis.remove_geometry(pcd, False)
+
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
             rgbd_image,
             intrinsics)
@@ -37,7 +47,14 @@ def display3d(path):
 
         # Flip it, otherwise the pointcloud will be upside down
         pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-        o3d.visualization.draw_geometries([pcd])
+        #o3d.visualization.draw_geometries([pcd])
+
+        #geometry.points = pcd.points
+        #geometry.colors = pcd.colors
+        vis.add_geometry(pcd)
+        vis.poll_events()
+        vis.update_renderer()
+
 
 
 def display_array(pcd_array, colors = None):
@@ -59,6 +76,6 @@ def get_z_fars(num=100):
 
 
 if __name__ == '__main__':
-    path = f'{pick_and_place}/PickAndPlaceEnv_2.npz'
+    path = f'{pick_and_place}/PickAndPlaceEnv_4.npz'
     display3d(path)
    #get_z_fars(100)
