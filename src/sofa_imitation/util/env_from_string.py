@@ -86,10 +86,11 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
             },
             num_active_pegs=3,
             num_torus_tracking_points=5,
-            start_grasped=True,
+            start_grasped=False,
             only_learn_pick=False,
-            minimum_lift_height=50.0,
+            minimum_lift_height=0.0,
             randomize_torus_position=False,
+            randomize_color=True,
             reward_amount_dict={
                 Phase.ANY: {
                     "lost_grasp": -30.0,
