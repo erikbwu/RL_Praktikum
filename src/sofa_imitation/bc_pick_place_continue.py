@@ -21,7 +21,7 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
     path = '../../../sofa_env_demonstrations/pick_and_place'
     n_run = 41
     start_time = '2024-02-29_09:24'
-    model_path = f'./model/ligating_loop/{start_time}/run_{n_run}'
+    model_path = f'./model/pick_and_place/{start_time}/run_{n_run}'
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
