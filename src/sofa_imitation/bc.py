@@ -46,9 +46,9 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         optimizer_kwargs={'lr': learning_rate(0)}
     )
 
-    reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
-    log.info(f"Reward before training: {reward_before_training}")
-    wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
+    # reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
+    # log.info(f"Reward before training: {reward_before_training}")
+    # wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
 
     n_run = 1
     while True:
