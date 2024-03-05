@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
-    n_run = 76
+    n_run = 133
     start_time = '2024-02-24_01:47'
     path = '../../../sofa_env_demonstrations/ligating_loop'
     model_path = f'./model/ligating_loop/{start_time}/run_{n_run}'
@@ -46,13 +46,13 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         rng=rng,
         device='cuda',
         batch_size=batch_size,
-        optimizer_kwargs={}
+        optimizer_kwargs={'lr': learning_rate(0)}
     )
 
     Path(f'./model/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
     while True:
         n_run += 1
-        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=50,)
+        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=10,)
         bc_trainer.policy.save(f'./model/ligating_loop/{start_time}/run_{n_run}')
 
         log.info('Finished run and saved model')
@@ -76,7 +76,7 @@ def hydra_run(cfg: DictConfig):
     n_eval = cfg.hyperparameter.number_evaluations
 
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
-               settings=wandb.Settings(start_method="thread"), notes='increased pointcloud size, fixed nn, continue',
+               settings=wandb.Settings(start_method="thread"), notes='increased pointcloud size, fixed nn, continue, lower learning rate from step 846 and 1320 epoch',
                resume='94688drl')
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
