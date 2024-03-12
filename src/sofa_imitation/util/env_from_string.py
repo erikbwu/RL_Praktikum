@@ -125,5 +125,34 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
         #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
         return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
+    elif env_name == 'ligating_loop_state':
+        from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
+        from gymnasium.wrappers import TimeLimit
+        from stable_baselines3.common.monitor import Monitor
+        from .wrappers import RolloutInfoWrapper
 
+        env = LigatingLoopEnv(
+            observation_type=ObservationType.STATE,
+            render_mode=render_mode,
+            action_type=ActionType.CONTINUOUS,
+            image_shape=image_shape,
+            frame_skip=2,
+            time_step=0.1,
+            settle_steps=50,
+            reward_amount_dict={
+                "distance_loop_to_marking_center": -0.05,
+                "delta_distance_loop_to_marking_center": -100.0,
+                "loop_center_in_cavity": 0.01,
+                "instrument_not_in_cavity": -0.0,
+                "instrument_shaft_collisions": -0.0,
+                "loop_marking_overlap": 0.8,
+                "loop_closed_around_marking": 0.5,
+                "loop_closed_in_thin_air": -0.1,
+                "successful_task": 100.0,
+            }
+        )
+        env = Monitor(env)
+        env = TimeLimit(env, max_episode_steps=500)
+        env = RolloutInfoWrapper(env)
+        return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
 

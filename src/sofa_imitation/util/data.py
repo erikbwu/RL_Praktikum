@@ -134,6 +134,42 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool, 
     transitions = Transitions(obs, np.asarray(actions), np.array([{}] * len(actions)), next_obs, np.asarray(dones))
 
     return transitions
+
+
+def npz_to_state_transitions(npz_path: str, prefix: str, n_traj: int) -> Transitions:
+    obs = []
+    next_obs = []
+    actions = []
+    dones = []
+
+
+    print(f'Loading Transitions from {npz_path}')
+    for i in range(n_traj):
+        npz_data = np.load(f'{npz_path}/{prefix}{i}.npz')
+
+        states = npz_data['state']
+
+        for timestep in range(len(states)):
+            state = states[timestep]
+
+            if timestep == 0:
+                obs.append(state)
+            elif timestep == len(states) - 1:
+                next_obs.append(state)
+            else:
+                obs.append(state)
+                next_obs.append(state)
+
+        action = npz_data['action']
+        done = np.zeros(len(action), dtype=bool)
+        done[-1] = True
+
+        actions.extend(action)
+        dones.extend(done)
+
+    transitions = Transitions(obs, np.asarray(actions), np.array([{}] * len(actions)), next_obs, np.asarray(dones))
+
+    return transitions
             
 
 

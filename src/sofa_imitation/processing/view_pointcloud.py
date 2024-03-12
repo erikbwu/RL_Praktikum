@@ -77,5 +77,6 @@ def get_z_fars(num=100):
 
 if __name__ == '__main__':
     path = f'{pick_and_place}/PickAndPlaceEnv_4.npz'
+    path = f'{ligating_loop_path}/LigatingLoopEnv_1.npz'
     display3d(path)
    #get_z_fars(100)
