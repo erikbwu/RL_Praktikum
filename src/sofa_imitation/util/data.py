@@ -144,7 +144,7 @@ def npz_to_state_transitions(npz_path: str, prefix: str, n_traj: int) -> Transit
 
 
     print(f'Loading Transitions from {npz_path}')
-    for i in range(n_traj):
+    for i in tqdm(range(n_traj), desc=f'Loading Transitions'):
         npz_data = np.load(f'{npz_path}/{prefix}{i}.npz')
 
         states = npz_data['state']
