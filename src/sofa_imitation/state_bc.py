@@ -78,7 +78,7 @@ def hydra_run(cfg: DictConfig):
     n_eval = cfg.hyperparameter.number_evaluations
 
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"),
-               notes='increased pointcloud size, fixed nn', tags=['nn=[256,128,64,32]', f'lr={lr}'])
+               notes='increased pointcloud size, fixed nn', tags=['nn=[256,128,64,32]', f'lr={lr}', 'state'])
 
     run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
     wandb.finish()
