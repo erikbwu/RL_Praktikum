@@ -21,7 +21,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     n_run = 133
     start_time = '2024-02-24_01:47'
     path = '../../../sofa_env_demonstrations/ligating_loop'
-    model_path = f'./model/ligating_loop/{start_time}/run_{n_run}'
+    model_path = f'./model/BC/ligating_loop/{start_time}/run_{n_run}'
 
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
@@ -53,7 +53,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     while True:
         n_run += 1
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=10,)
-        bc_trainer.policy.save(f'./model/ligating_loop/{start_time}/run_{n_run}')
+        bc_trainer.policy.save(f'./model/BC/ligating_loop/{start_time}/run_{n_run}')
 
         log.info('Finished run and saved model')
 

@@ -21,7 +21,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
            num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
     path = '../../../sofa_env_demonstrations/ligating_loop'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
-    Path(f'./model/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
+    Path(f'./model/BC/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
@@ -54,7 +54,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     n_run = 1
     while True:
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=100,)
-        bc_trainer.policy.save(f'./model/ligating_loop/{start_time}/run_{n_run}')
+        bc_trainer.policy.save(f'./model/BC/ligating_loop/{start_time}/run_{n_run}')
         #save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
 

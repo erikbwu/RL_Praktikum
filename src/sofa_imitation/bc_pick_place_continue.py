@@ -21,7 +21,7 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
     path = '../../../sofa_env_demonstrations/pick_and_place'
     n_run = 43
     start_time = '2024-02-29_09:24'
-    model_path = f'./model/pick_and_place/{start_time}/run_{n_run}'
+    model_path = f'./model/BC/pick_and_place/{start_time}/run_{n_run}'
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
@@ -56,7 +56,7 @@ def run_bc(env_name: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 
     Path(f'./model/{env_name}/{start_time}/').mkdir(parents=True, exist_ok=True)
     while True:
         bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=50)
-        bc_trainer.policy.save(f'./model/{env_name}/{start_time}/run_{n_run}')
+        bc_trainer.policy.save(f'./model/BC/{env_name}/{start_time}/run_{n_run}')
         #save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
 
