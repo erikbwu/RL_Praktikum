@@ -1,7 +1,7 @@
 defaults:
   - local_hp
 
-batch_size: 64
+demo_batch_size: 4069
 learning_rate: 5e-3
 number_trajectories: 500
 number_evaluations: 2

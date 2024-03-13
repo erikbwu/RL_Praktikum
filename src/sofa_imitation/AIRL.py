@@ -25,7 +25,7 @@ SEED = 42
 
 
 # doenst work with using pointclouds yet
-def run_AIRL(env_name: str, env_prefix: str, train_steps: int, batch_size: int = 256, learning_rate: float = 0.0001,
+def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: int, batch_size: int = 256, learning_rate: float = 0.0001,
              num_traj: int = 2, n_eval: int = 0, use_state: bool = False, use_color: bool = False):
 
     path = f'../../../sofa_env_demonstrations/{env_name}'
@@ -113,20 +113,21 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, batch_size: int =
 def hydra_run(cfg: DictConfig):
     log.info(OmegaConf.to_yaml(cfg))
     lr = cfg.hyperparameter.learning_rate
-    n_epochs = cfg.hyperparameter.number_epochs
     bs = cfg.hyperparameter.batch_size
     num_traj = cfg.hyperparameter.number_trajectories
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
     use_state = cfg.hyperparameter.use_state
     train_steps = cfg.hyperparameter.train_steps
+    demo_batch_size = cfg.hyperparameter.demo_batch_size
 
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
                settings=wandb.Settings(start_method="thread"),
                notes='', tags=['AIRL', f'lr={lr}'])
 
     #run_AIRL('ligating_loop', 'LigatingLoopEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
-    run_AIRL('pick_and_place', 'PickAndPlaceEnv_', train_steps, bs, lr, num_traj, n_eval, use_state, use_color)
+    run_AIRL('pick_and_place', 'PickAndPlaceEnv_', train_steps, demo_batch_size,
+             bs, lr, num_traj, n_eval, use_state, use_color)
 
     #wandb.finish()
 
