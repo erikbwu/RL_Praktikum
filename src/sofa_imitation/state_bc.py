@@ -27,7 +27,7 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env('ligating_loop_state', False)
+    env = get_env('ligating_loop', True)
 
     rng = np.random.default_rng()
     policy = ActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32])

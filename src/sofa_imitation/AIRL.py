@@ -29,6 +29,7 @@ def run_AIRL(env_name: str, env_prefix: str, batch_size: int = 256, learning_rat
              num_traj: int = 2, n_eval: int = 0, use_state: bool = False, use_color: bool = False):
 
     path = f'../../../sofa_env_demonstrations/{env_name}'
+    path = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     grid_size = get_grid_size_from_string(env_name)
 
@@ -97,7 +98,7 @@ def run_AIRL(env_name: str, env_prefix: str, batch_size: int = 256, learning_rat
 
     Path(f'./model/AIRL/{env_name}/{start_time}/').mkdir(parents=True, exist_ok=True)
     airl_trainer.train(20000)  # Train for 2_000_000 steps to match expert.
-    airl_trainer.policy.save(f'./model/AIRL/ligating_loop/{start_time}/run_0')
+    airl_trainer.policy.save(f'./model/AIRL/{env_name}/{start_time}/run_0')
     env.seed(SEED)
     learner_rewards_after_training, _ = evaluate_policy(learner, env, n_eval)
 
@@ -119,7 +120,9 @@ def hydra_run(cfg: DictConfig):
                settings=wandb.Settings(start_method="thread"),
                notes='', tags=['AIRL', f'lr={lr}'])
 
-    run_AIRL('ligating_loop', 'LigatingLoopEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
+    #run_AIRL('ligating_loop', 'LigatingLoopEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
+    run_AIRL('pick_and_place', 'PickAndPlaceEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
+
     wandb.finish()
 
 

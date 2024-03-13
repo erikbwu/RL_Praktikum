@@ -3,6 +3,6 @@ defaults:
 
 batch_size: 256
 learning_rate: 5e-3
-number_trajectories: 10
+number_trajectories: 500
 number_epochs: 20
 number_evaluations: 2
