@@ -25,7 +25,7 @@ SEED = 42
 
 
 # doenst work with using pointclouds yet
-def run_AIRL(env_name: str, env_prefix: str, batch_size: int = 256, learning_rate: float = 0.0001, num_epoch: int = 20,
+def run_AIRL(env_name: str, env_prefix: str, train_steps: int, batch_size: int = 256, learning_rate: float = 0.0001,
              num_traj: int = 2, n_eval: int = 0, use_state: bool = False, use_color: bool = False):
 
     path = f'../../../sofa_env_demonstrations/{env_name}'
@@ -97,10 +97,14 @@ def run_AIRL(env_name: str, env_prefix: str, batch_size: int = 256, learning_rat
     # print("mean reward before training:", learner_rewards_before_training)
 
     Path(f'./model/AIRL/{env_name}/{start_time}/').mkdir(parents=True, exist_ok=True)
-    airl_trainer.train(20000)  # Train for 2_000_000 steps to match expert.
-    airl_trainer.policy.save(f'./model/AIRL/{env_name}/{start_time}/run_0')
-    env.seed(SEED)
-    learner_rewards_after_training, _ = evaluate_policy(learner, env, n_eval)
+    n_run = 0
+    while True:
+        n_run += 1
+        airl_trainer.train(train_steps)  # Train for 2_000_000 steps to match expert.
+        airl_trainer.policy.save(f'./model/AIRL/{env_name}/{start_time}/run_{n_run}')
+        env.seed(SEED)
+        learner_rewards_after_training, std = evaluate_policy(learner, env, n_eval)
+        wandb.log({"reward": learner_rewards_after_training, "std_reward": std, "train_steps": n_run * train_steps})
 
     print("mean reward after training:", learner_rewards_after_training)
 
@@ -115,15 +119,16 @@ def hydra_run(cfg: DictConfig):
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
     use_state = cfg.hyperparameter.use_state
+    train_steps = cfg.hyperparameter.train_steps
 
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
                settings=wandb.Settings(start_method="thread"),
                notes='', tags=['AIRL', f'lr={lr}'])
 
     #run_AIRL('ligating_loop', 'LigatingLoopEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
-    run_AIRL('pick_and_place', 'PickAndPlaceEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
+    run_AIRL('pick_and_place', 'PickAndPlaceEnv_', train_steps, bs, lr, num_traj, n_eval, use_state, use_color)
 
-    wandb.finish()
+    #wandb.finish()
 
 
 if __name__ == "__main__":
