@@ -5,18 +5,21 @@ import numpy as np
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from .make_env import make_env
-from .wrappers import WatchdogVecEnv
+from .wrappers import WatchdogVecEnv, FloatObservationWrapper
 
 
-def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
+def get_env(env_name: str, use_state:bool = False, should_render: bool = False, use_color: bool = True):
     render_mode = RenderMode.HUMAN if should_render else RenderMode.HEADLESS
     image_shape = (256,256)
 
     if env_name == 'ligating_loop':
         from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
+        from gymnasium.wrappers import TimeLimit
+        from stable_baselines3.common.monitor import Monitor
+        from .wrappers import RolloutInfoWrapper
 
         env = LigatingLoopEnv(
-            observation_type=ObservationType.RGB,
+            observation_type=ObservationType.STATE if use_state else ObservationType.RGB,
             render_mode=render_mode,
             action_type=ActionType.CONTINUOUS,
             image_shape=image_shape,
@@ -35,7 +38,13 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
                 "successful_task": 100.0,
             }
         )
-        env = make_env(env, use_color, 500, 220)
+        if use_state:
+            env = Monitor(env)
+            env = TimeLimit(env, max_episode_steps=500)
+            env = RolloutInfoWrapper(env)
+            env = FloatObservationWrapper(env)
+        else:
+            env = make_env(env, use_color, 500, 220)
         return WatchdogVecEnv([lambda : env], step_timeout_sec=45)
 
     elif env_name == 'rope_cutting':
@@ -68,9 +77,12 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
 
     elif env_name == 'pick_and_place':
         from sofa_env.scenes.pick_and_place.pick_and_place_env import PickAndPlaceEnv, Phase, ObservationType, ActionType
+        from gymnasium.wrappers import TimeLimit
+        from stable_baselines3.common.monitor import Monitor
+        from .wrappers import RolloutInfoWrapper
 
         env = PickAndPlaceEnv(
-            observation_type=ObservationType.RGB,
+            observation_type=ObservationType.STATE if use_state else ObservationType.RGB,
             render_mode=render_mode,
             action_type=ActionType.CONTINUOUS,
             image_shape=image_shape,
@@ -120,39 +132,28 @@ def get_env(env_name: str, should_render: bool = False, use_color: bool = True):
                 },
             },
         )
-        env = make_env(env, use_color, 600, depth_cutoff=350)
+        if use_state:
+            env = Monitor(env)
+            env = TimeLimit(env, max_episode_steps=600)
+            env = RolloutInfoWrapper(env)
+            env = FloatObservationWrapper(env)
+        else:
+            env = make_env(env, use_color, 600, depth_cutoff=350)
 
         #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
         return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
-    elif env_name == 'ligating_loop_state':
-        from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
-        from gymnasium.wrappers import TimeLimit
-        from stable_baselines3.common.monitor import Monitor
-        from .wrappers import RolloutInfoWrapper
 
-        env = LigatingLoopEnv(
-            observation_type=ObservationType.STATE,
-            render_mode=render_mode,
-            action_type=ActionType.CONTINUOUS,
-            image_shape=image_shape,
-            frame_skip=2,
-            time_step=0.1,
-            settle_steps=50,
-            reward_amount_dict={
-                "distance_loop_to_marking_center": -0.05,
-                "delta_distance_loop_to_marking_center": -100.0,
-                "loop_center_in_cavity": 0.01,
-                "instrument_not_in_cavity": -0.0,
-                "instrument_shaft_collisions": -0.0,
-                "loop_marking_overlap": 0.8,
-                "loop_closed_around_marking": 0.5,
-                "loop_closed_in_thin_air": -0.1,
-                "successful_task": 100.0,
-            }
-        )
-        env = Monitor(env)
-        env = TimeLimit(env, max_episode_steps=500)
-        env = RolloutInfoWrapper(env)
-        return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
+def get_grid_size_from_string(env: str):
+    grids = {
+        'ligating_loop': {
+            'FeatureExtractor': 1,
+            'Demo': 0.001
+        },
+        'pick_and_place': {
+            'FeatureExtractor': 2,
+            'Demo': 0.002
+        }
+    }
+    return grids[env]
 

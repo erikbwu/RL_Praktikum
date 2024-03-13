@@ -1,0 +1,4 @@
+defaults:
+  - hyperparameter: local_hp_AIRL
+  - override hydra/launcher: submitit_local
+  - _self_

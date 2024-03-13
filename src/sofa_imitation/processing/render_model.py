@@ -19,7 +19,7 @@ def render_model_state(model_path: str, env_name:str ):
 
 
 if __name__ == "__main__":
-    model_path_state = '/home/erik/RL_Praktikum/src/sofa_imitation/model/ligating_loop/2024-03-12_14:16/run_7'
+    model_path_state = '/home/erik/RL_Praktikum/src/sofa_imitation/model/ligating_loop/2024-03-12_14:40/run_2'
     model_path = '/home/erik/RL_Praktikum/src/sofa_imitation/model/ligating_loop/2024-02-24_01:47/run_161' #ligating loop
     model_path = '/home/erik/RL_Praktikum/src/sofa_imitation/model/pick_and_place/2024-02-29_09:24/run_63'
     #model_path = '/home/erik/run_1000'

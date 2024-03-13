@@ -66,6 +66,9 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
 
     def forward(self, observations: Data) -> torch.Tensor:
         if isinstance(observations, torch.Tensor):
+            if len(observations.shape) == 3 and observations.shape[0] == 1: # has batch dimension
+                observations = observations[0]
+
             assert len(observations.shape) == 2  # only handles one array observation
             if observations.shape[-1] != 3:  # has color
                 observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),

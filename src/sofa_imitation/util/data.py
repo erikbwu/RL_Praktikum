@@ -85,7 +85,7 @@ def npz_to_transitions(npz_path: str, prefix: str, n_traj: int, useColor: bool, 
     grid_sampling = GridSampling(grid_size)  # 0.003 ~> 1100, 0,0025 ~> 1500 (ligating loop)
 
     print(f'Loading Transitions from {npz_path}')
-    for i in range(n_traj):
+    for i in tqdm(range(n_traj), desc=f'Loading Transitions'):
         npz_data = np.load(f'{npz_path}/{prefix}{i}.npz')
 
         width = npz_data['metadata.camera.width']
@@ -150,7 +150,7 @@ def npz_to_state_transitions(npz_path: str, prefix: str, n_traj: int) -> Transit
         states = npz_data['state']
 
         for timestep in range(len(states)):
-            state = states[timestep]
+            state = states[timestep].astype(np.float32)
 
             if timestep == 0:
                 obs.append(state)
@@ -167,7 +167,8 @@ def npz_to_state_transitions(npz_path: str, prefix: str, n_traj: int) -> Transit
         actions.extend(action)
         dones.extend(done)
 
-    transitions = Transitions(obs, np.asarray(actions), np.array([{}] * len(actions)), next_obs, np.asarray(dones))
+    transitions = Transitions(np.asarray(obs,dtype=np.float32), np.asarray(actions, dtype=np.float32), np.array([{}] * len(actions)),
+                              np.asarray(next_obs,dtype=np.float32), np.asarray(dones))
 
     return transitions
             

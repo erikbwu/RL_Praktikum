@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy
 from imitation.data import types
 
 from typing import Callable
@@ -446,3 +447,17 @@ def wait_all(object_list, timeout: Optional[float] = None):
                     timeout = deadline - time.monotonic()
                     if timeout < 0:
                         return all_ready
+
+
+class FloatObservationWrapper(gym.ObservationWrapper):
+    def __init__(
+        self,
+        env: gym.Env,
+    ):
+        super().__init__(env)
+
+    def observation(self, observation) -> np.ndarray:
+        """Replaces the observation of a step in a sofa_env scene with a point cloud."""
+
+        return numpy.asarray(observation, dtype=np.float32)
+
