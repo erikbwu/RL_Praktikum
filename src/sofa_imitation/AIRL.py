@@ -28,14 +28,14 @@ SEED = 42
 def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: int, batch_size: int = 256, learning_rate: float = 0.0001,
              num_traj: int = 2, n_eval: int = 0, use_state: bool = False, use_color: bool = False):
 
-    path = f'../../../sofa_env_demonstrations/{env_name}'
-    path = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
+    #path = f'../../../sofa_env_demonstrations/{env_name}'
+    path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     grid_size = get_grid_size_from_string(env_name)
 
     assert isinstance(learning_rate, float) or isinstance(learning_rate, int)
 
-    env = get_env(env_name, use_state)
+    env = get_env(env_name, use_state, True)
 
     if use_state:
         demos = npz_to_state_transitions(path, env_prefix, num_traj)
@@ -125,11 +125,16 @@ def hydra_run(cfg: DictConfig):
                settings=wandb.Settings(start_method="thread"),
                notes='', tags=['AIRL', f'lr={lr}'])
 
-    #run_AIRL('ligating_loop', 'LigatingLoopEnv_', bs, lr, n_epochs, num_traj, n_eval, use_state, use_color)
-    run_AIRL('pick_and_place', 'PickAndPlaceEnv_', train_steps, demo_batch_size,
-             bs, lr, num_traj, n_eval, use_state, use_color)
+    # run_AIRL('ligating_loop', 'LigatingLoopEnv_', train_steps, demo_batch_size,
+    #          bs, lr, num_traj, n_eval, use_state, use_color)
+    #run_AIRL('pick_and_place', 'PickAndPlaceEnv_', train_steps, demo_batch_size,
+            # bs, lr, num_traj, n_eval, use_state, use_color)
 
-    #wandb.finish()
+    # run_AIRL('rope_cutting', 'RopeCuttingEnv_', train_steps, demo_batch_size,
+    #          bs, lr, num_traj, n_eval, use_state, use_color)
+    run_AIRL('grasp_lift_touch', 'GraspLiftTouchEnv_', train_steps, demo_batch_size,
+             bs, lr, num_traj, n_eval, use_state, use_color)
+    #wandb.finish()grasp_lift_touch
 
 
 if __name__ == "__main__":
