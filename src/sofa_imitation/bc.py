@@ -38,7 +38,7 @@ def run_bc(env_name: str, env_prefix: str, batch_size: int = 2, learning_rate=la
         BC = bc.BC
 
     else:
-        demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demos'])
+        demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demo'])
         policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32],
                                            grid_size['FeatureExtractor'], 3 if use_color else 0)
         BC = bc.BC_Pyg
