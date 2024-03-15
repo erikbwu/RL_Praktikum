@@ -28,6 +28,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
             frame_skip=2,
             time_step=0.1,
             settle_steps=50,
+            band_width=10,
             reward_amount_dict={
                 "distance_loop_to_marking_center": -0.05,
                 "delta_distance_loop_to_marking_center": -100.0,
@@ -58,7 +59,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
             action_type=ActionType.CONTINUOUS,
             image_shape=image_shape,
             frame_skip=1,
-            time_step=0.1,
+            time_step=0.01,
             settle_steps=10,
             settle_step_dt=0.01,
             # reward_amount_dict={
@@ -74,11 +75,11 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
         )
         if use_state:
             env = Monitor(env)
-            env = TimeLimit(env, max_episode_steps=400)
+            env = TimeLimit(env, max_episode_steps=500)
             env = RolloutInfoWrapper(env)
             env = FloatObservationWrapper(env)
         else:
-            env = make_env(env, use_color, 400, depth_cutoff=245)
+            env = make_env(env, use_color, 500, depth_cutoff=245)
         #return env
         # return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
         return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
@@ -154,7 +155,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
         env = GraspLiftTouchEnv(
             observation_type=ObservationType.STATE if use_state else ObservationType.RGB,
             render_mode=render_mode,
-            start_in_phase=Phase.TOUCH,
+            start_in_phase=Phase.GRASP,
             end_in_phase=Phase.DONE,
             image_shape=(256, 256),
         )
@@ -191,4 +192,14 @@ def get_grid_size_from_string(env: str):
         }
     }
     return grids[env]
+
+def action_dim_from_string(env: str):
+    dims = {
+        'ligating_loop': 5,
+        'pick_and_place': 5,
+        'rope_cutting': 5,
+        'grasp_lift_touch': 10,
+    }
+    return dims[env]
+
 

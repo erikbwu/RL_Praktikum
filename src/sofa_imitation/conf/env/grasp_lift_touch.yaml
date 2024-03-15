@@ -1,0 +1,2 @@
+env_name: grasp_lift_touch
+env_prefix: GraspLiftTouchEnv_

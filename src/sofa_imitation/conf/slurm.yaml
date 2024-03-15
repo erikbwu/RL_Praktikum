@@ -1,5 +1,6 @@
 defaults:
   - hyperparameter: default_hyperparam
+  - env: ligating_loop
   - override hydra/launcher: gpu_8
   - _self_
 

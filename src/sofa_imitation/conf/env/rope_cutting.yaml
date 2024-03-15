@@ -1,0 +1,2 @@
+env_name: rope_cutting
+env_prefix: RopeCuttingEnv_

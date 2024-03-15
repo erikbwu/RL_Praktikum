@@ -4,4 +4,3 @@ number_trajectories: 500
 number_epochs: 20
 use_color: true
 number_evaluations: 7
-use_state: true

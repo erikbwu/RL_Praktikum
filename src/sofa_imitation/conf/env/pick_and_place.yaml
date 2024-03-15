@@ -1,0 +1,2 @@
+env_name: pick_and_place
+env_prefix: PickAndPlaceEnv_
