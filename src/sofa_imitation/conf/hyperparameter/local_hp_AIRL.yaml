@@ -3,7 +3,6 @@ defaults:
 
 demo_batch_size: 4000
 learning_rate: 5e-3
-number_trajectories: 500
+number_trajectories: 2
 number_evaluations: 2
-train_steps: 10000
-use_state: True
+train_steps: 200000
