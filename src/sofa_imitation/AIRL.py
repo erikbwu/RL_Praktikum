@@ -14,10 +14,11 @@ from imitation.algorithms.adversarial.airl import AIRL, AIRL_Pyg
 from imitation.rewards.reward_nets import BasicShapedRewardNet
 from imitation.util.networks import RunningNorm
 
-from util.env_from_string import get_env, get_grid_size_from_string
+from util.env_from_string import get_env, get_grid_size_from_string, action_dim_from_string
 from util.data import npz_to_transitions, npz_to_state_transitions
 from util.evaluate_policy import evaluate_policy
 from policy.PointNetActorCritic import PointNetFeaturesExtractor, PointNetActorCriticPolicy
+from policy.PointNetRewardNet import PointNetRewardNet
 from util.wrappers import FloatObservationWrapper
 
 log = logging.getLogger(__name__)
@@ -35,23 +36,30 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
 
     assert isinstance(learning_rate, float) or isinstance(learning_rate, int)
 
-    env = get_env(env_name, use_state, True)
+    env = get_env(env_name, use_state, should_render=False)
 
     if use_state:
         demos = npz_to_state_transitions(path, env_prefix, num_traj)
+        policy = MlpPolicy
+        policy_kwargs = {}
+        reward_net = BasicShapedRewardNet(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            normalize_input_layer=RunningNorm,  # todo maybe normalize myself?
+        )
+
     else:
         demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demo'])
-    log.info('Finished loading train data')
-
-    policy_kwargs = {}
-    policy = MlpPolicy
-    if not use_state:
         policy = PointNetActorCriticPolicy
         policy_kwargs = {
             'net_arch': [256, 128, 64, 32],
             'grid_size': grid_size['FeatureExtractor'],
             'inp_features_dim': 3 if use_color else 0
         }
+        reward_net = PointNetRewardNet(env.observation_space, env.action_space, grid_size['FeatureExtractor'],
+                                       inp_features_dim=3 if use_color else 0, action_features_dim=action_dim_from_string(env_name))
+    log.info('Finished loading train data')
+
 
     learner = PPO(
         env=env,
@@ -66,11 +74,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
         seed=SEED,
         policy_kwargs=policy_kwargs,
     )
-    reward_net = BasicShapedRewardNet(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        normalize_input_layer=RunningNorm, #todo maybe normalize myself?
-    )
+
     if use_state:
         airl_trainer = AIRL(
             demonstrations=demos,
@@ -121,19 +125,14 @@ def hydra_run(cfg: DictConfig):
     train_steps = cfg.hyperparameter.train_steps
     demo_batch_size = cfg.hyperparameter.demo_batch_size
 
+    env_name = cfg.env.env_name
+    env_prefix = cfg.env.env_prefix
+
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
                settings=wandb.Settings(start_method="thread"),
-               notes='', tags=['AIRL', f'lr={lr}'])
-
-    # run_AIRL('ligating_loop', 'LigatingLoopEnv_', train_steps, demo_batch_size,
-    #          bs, lr, num_traj, n_eval, use_state, use_color)
-    #run_AIRL('pick_and_place', 'PickAndPlaceEnv_', train_steps, demo_batch_size,
-            # bs, lr, num_traj, n_eval, use_state, use_color)
-
-    # run_AIRL('rope_cutting', 'RopeCuttingEnv_', train_steps, demo_batch_size,
-    #          bs, lr, num_traj, n_eval, use_state, use_color)
-    run_AIRL('grasp_lift_touch', 'GraspLiftTouchEnv_', train_steps, demo_batch_size,
-             bs, lr, num_traj, n_eval, use_state, use_color)
+               notes='', tags=['AIRL', f'lr={lr}', env_name])
+    run_AIRL(env_name, env_prefix, train_steps, demo_batch_size,
+              bs, lr, num_traj, n_eval, use_state, use_color)
     #wandb.finish()grasp_lift_touch
 
 
