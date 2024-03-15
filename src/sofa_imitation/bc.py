@@ -8,34 +8,44 @@ import numpy as np
 from imitation.algorithms import bc
 
 from policy.PointNetActorCritic import PointNetActorCriticPolicy
-from util.env_from_string import get_env
-from util.data import npz_to_transitions
+from stable_baselines3.common.policies import ActorCriticPolicy
+from util.env_from_string import get_env, get_grid_size_from_string
+from util.data import npz_to_transitions, npz_to_state_transitions
 from util.evaluate_policy import evaluate_policy
 import wandb
 
 log = logging.getLogger(__name__)
 
 
-def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
-           num_traj: int = 5, use_color: bool = False, n_eval: int = 0):
-    path = '../../../sofa_env_demonstrations/ligating_loop'
+def run_bc(env_name: str, env_prefix: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch,
+           num_epoch: int = 1, num_traj: int = 5, use_color: bool = False, use_state: bool = False, n_eval: int = 0):
+    path = f'../../../sofa_env_demonstrations/{env_name}'
+    path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
-    Path(f'./model/BC/ligating_loop/{start_time}/').mkdir(parents=True, exist_ok=True)
+    grid_size = get_grid_size_from_string(env_name)
 
     if isinstance(learning_rate, float) or isinstance(learning_rate, int):
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env('ligating_loop', False)
+    env = get_env(env_name, use_state)
 
     rng = np.random.default_rng()
-    policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32], 1, 3 if use_color else 0)
 
-    demos = npz_to_transitions(path, 'LigatingLoopEnv_', num_traj, use_color, 0.001)
+    if use_state:
+        demos = npz_to_state_transitions(path, env_prefix, num_traj)
+        policy = ActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32])
+        BC = bc.BC
+
+    else:
+        demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demos'])
+        policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32],
+                                           grid_size['FeatureExtractor'], 3 if use_color else 0)
+        BC = bc.BC_Pyg
 
     log.info('Finished loading train data')
 
-    bc_trainer = bc.BC_Pyg( 
+    bc_trainer = BC(
         observation_space=env.observation_space,
         action_space=env.action_space,
         demonstrations=demos,
@@ -49,12 +59,12 @@ def run_bc(batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch
     # reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
     # log.info(f"Reward before training: {reward_before_training}")
     # wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
-
+    Path(f'./model/BC/{env_name}/{start_time}/').mkdir(parents=True, exist_ok=True)
     n_run = 1
     while True:
-        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=50,)
-        bc_trainer.policy.save(f'./model/BC/ligating_loop/{start_time}/run_{n_run}')
-        #save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
+        bc_trainer.train(n_epochs=num_epoch, progress_bar=True, log_interval=50, )
+        bc_trainer.policy.save(f'./model/BC/{env_name}/{start_time}/run_{n_run}')
+        # save_stable_model(Path(f'./model/ligating_loop/{start_time}'), bc_trainer.policy, f'run_{n_run}')
         log.info('Finished run and saved model')
 
         reward_after_training, std_reward = evaluate_policy(bc_trainer.policy, env, n_eval)
@@ -75,11 +85,15 @@ def hydra_run(cfg: DictConfig):
     num_traj = cfg.hyperparameter.number_trajectories
     use_color = cfg.hyperparameter.use_color
     n_eval = cfg.hyperparameter.number_evaluations
+    env_name = cfg.env.env_name
+    env_prefix = cfg.env.env_prefix
+    use_state = cfg.hyperparameter.use_state
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True), settings=wandb.Settings(start_method="thread"),
-               notes='increased pointcloud size, fixed nn', tags=['nn=[256,128,64,32]', f'lr={lr}'])
+    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
+               settings=wandb.Settings(start_method="thread"),
+               notes='', tags=['nn=[256,128,64,32]', f'lr={lr}', env_name, 'BC'])
 
-    run_bc(bs, lr, n_epochs, num_traj, use_color, n_eval)
+    run_bc(env_name, env_prefix, bs, lr, n_epochs, num_traj, use_color, use_state, n_eval)
     wandb.finish()
 
 
