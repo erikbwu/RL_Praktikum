@@ -2,6 +2,7 @@ import open3d as o3d
 import numpy as np
 import torch
 
+spath = '/media/erik/Volume/sofa_env_demonstrations/'
 ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
 pick_and_place = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
 
@@ -78,5 +79,7 @@ def get_z_fars(num=100):
 if __name__ == '__main__':
     path = f'{pick_and_place}/PickAndPlaceEnv_4.npz'
     path = f'{ligating_loop_path}/LigatingLoopEnv_1.npz'
-    display3d(path)
+    glt_path = f'{spath}/grasp_lift_touch/GraspLiftTouchEnv_1.npz'
+    rp_path = f'{spath}/rope_cutting/RopeCuttingEnv_1.npz'
+    display3d(rp_path)
    #get_z_fars(100)
