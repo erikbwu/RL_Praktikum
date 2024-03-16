@@ -1,0 +1,7 @@
+defaults:
+  - slurm_base
+
+tasks_per_node: 32
+mem_gb: 100
+partition: single
+gres: gpu:0

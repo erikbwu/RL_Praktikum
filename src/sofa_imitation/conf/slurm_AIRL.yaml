@@ -1,0 +1,5 @@
+defaults:
+  - hyperparameter: slurm_hp_AIRL
+  - env: ligating_loop
+  - override hydra/launcher: gpu_8
+  - _self_
