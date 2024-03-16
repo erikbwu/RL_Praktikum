@@ -65,19 +65,22 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         self.grid_sampling = GridSampling(grid_size)  # 3 ~> 1100, 2.5 ~> 1500
 
     def forward(self, observations: Data) -> torch.Tensor:
-        if isinstance(observations, torch.Tensor):
-            if len(observations.shape) == 3 and observations.shape[0] == 1: # has batch dimension
-                observations = observations[0]
 
-            assert len(observations.shape) == 2  # only handles one array observation
+        if isinstance(observations, torch.Tensor):
+            assert len(observations.shape) == 3 # (batch_dim, #points_dim, features/pos dim)
+            num_points = torch.tensor([len(points) for points in observations])
+            batch = torch.repeat_interleave(
+                torch.arange(len(num_points), device=num_points.device),
+                repeats=num_points,
+            )
+            observations = torch.flatten(observations, end_dim=1)
             if observations.shape[-1] != 3:  # has color
-                observations = Data(pos=observations[:, :3], batch=torch.full((len(observations),), 0),
+                observations = Data(pos=observations[:, :3], batch=batch,
                                     x=observations[:, 3:]).to(observations.device)
             else:
-                observations = Data(pos=observations, batch=torch.full((len(observations),), 0)).to(
-                    observations.device)
+                observations = Data(pos=observations, batch=batch).to(observations.device)
         # display_array(observations.pos.cpu(), observations.x.cpu())
-        if len(observations.pos) > 5000:
+        if len(observations.pos) > 5000: #todo change when using batched lists, only works bc during evaluation one obs is returned
             observations = self.grid_sampling(observations)
         # display_array(observations.pos.cpu(), observations.x.cpu())
         sa0_out = (observations.x.to(torch.float32), observations.pos.to(torch.float32), observations.batch)
@@ -85,6 +88,7 @@ class PointNetFeaturesExtractor(BaseFeaturesExtractor):
         sa2_out = self.sa2_module(*sa1_out)
         sa3_out = self.sa3_module(*sa2_out)
         x, pos, batch = sa3_out
+
         return self.mlp(x)
 
 
@@ -172,7 +176,7 @@ class PointNetActorCriticPolicy(ActorCriticPolicy):
                 "and documentation for more information: https://stable-baselines3.readthedocs.io/en/master/guide/vec_envs.html#vecenv-api-vs-gym-api"
             )
 
-        obs_tensor, vectorized_env = observation, False  # todo changed
+        obs_tensor, vectorized_env = observation, True  # todo changed
 
         with th.no_grad():
             actions = self._predict(obs_tensor, deterministic=deterministic)
