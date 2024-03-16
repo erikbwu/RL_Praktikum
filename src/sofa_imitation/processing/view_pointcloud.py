@@ -64,7 +64,7 @@ def display_array(pcd_array, colors = None):
     pcd.points = o3d.utility.Vector3dVector(pcd_array)
     print(len(pcd_array))
     if colors is not None:
-        pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
+        pcd.colors = o3d.utility.Vector3dVector(np.asarray(colors))
 
     o3d.visualization.draw_geometries([pcd])
 
