@@ -91,7 +91,7 @@ def hydra_run(cfg: DictConfig):
 
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
                settings=wandb.Settings(start_method="thread"),
-               notes='', tags=['nn=[256,128,64,32]', f'lr={lr}', env_name, 'BC'])
+               notes='', tags=['nn=[256,128,64,32]', f'lr={lr}', env_name, 'BC', f'use_state={use_state}'])
 
     run_bc(env_name, env_prefix, bs, lr, n_epochs, num_traj, use_color, use_state, n_eval)
     wandb.finish()
