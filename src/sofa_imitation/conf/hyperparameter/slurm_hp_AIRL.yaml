@@ -1,5 +1,5 @@
 defaults:
-  default_hyperparam
+  - default_hyperparam
 
 demo_batch_size: 4000
 train_steps: 2000000
