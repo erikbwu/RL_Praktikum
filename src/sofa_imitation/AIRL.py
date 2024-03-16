@@ -4,13 +4,14 @@ from pathlib import Path
 
 import wandb
 import hydra
+from imitation.algorithms.adversarial import airl
+from imitation.util.logger import configure
 from omegaconf import DictConfig, OmegaConf
 
 
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 
-from imitation.algorithms.adversarial.airl import AIRL, AIRL_Pyg
 from imitation.rewards.reward_nets import BasicShapedRewardNet
 from imitation.util.networks import RunningNorm
 
@@ -29,8 +30,8 @@ SEED = 42
 def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: int, batch_size: int = 256, learning_rate: float = 0.0001,
              num_traj: int = 2, n_eval: int = 0, use_state: bool = False, use_color: bool = False):
 
-    #path = f'../../../sofa_env_demonstrations/{env_name}'
-    path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
+    path = f'../../../sofa_env_demonstrations/{env_name}'
+    #path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     grid_size = get_grid_size_from_string(env_name)
 
@@ -47,6 +48,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
             action_space=env.action_space,
             normalize_input_layer=RunningNorm,  # todo maybe normalize myself?
         )
+        AIRL = airl.AIRL
 
     else:
         demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demo'])
@@ -58,6 +60,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
         }
         reward_net = PointNetRewardNet(env.observation_space, env.action_space, grid_size['FeatureExtractor'],
                                        inp_features_dim=3 if use_color else 0, action_features_dim=action_dim_from_string(env_name))
+        AIRL = airl.AIRL_Pyg
     log.info('Finished loading train data')
 
 
@@ -75,26 +78,16 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
         policy_kwargs=policy_kwargs,
     )
 
-    if use_state:
-        airl_trainer = AIRL(
-            demonstrations=demos,
-            demo_batch_size=2048,
-            gen_replay_buffer_capacity=512,
-            n_disc_updates_per_round=16,
-            venv=env,
-            gen_algo=learner,
-            reward_net=reward_net,
-        )
-    else:
-        airl_trainer = AIRL_Pyg(
-            demonstrations=demos,
-            demo_batch_size=2048,
-            gen_replay_buffer_capacity=512,
-            n_disc_updates_per_round=16,
-            venv=env,
-            gen_algo=learner,
-            reward_net=reward_net,
-        )
+    airl_trainer = AIRL(
+        demonstrations=demos,
+        demo_batch_size=2048,
+        gen_replay_buffer_capacity=512,
+        n_disc_updates_per_round=16,
+        venv=env,
+        gen_algo=learner,
+        reward_net=reward_net,
+        custom_logger=configure(None, ['stdout', 'wandb']),
+    )
 
     env.seed(SEED)
     # learner_rewards_before_training, _ = evaluate_policy(learner, env, 0)
@@ -128,9 +121,9 @@ def hydra_run(cfg: DictConfig):
     env_name = cfg.env.env_name
     env_prefix = cfg.env.env_prefix
 
-    wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
+    wandb.init(project="Imitation_Sofa_AIRL", config=OmegaConf.to_container(cfg, resolve=True),
                settings=wandb.Settings(start_method="thread"),
-               notes='', tags=['AIRL', f'lr={lr}', env_name])
+               notes='', tags=[f'lr={lr}', env_name, f'use_state={use_state}'])
     run_AIRL(env_name, env_prefix, train_steps, demo_batch_size,
               bs, lr, num_traj, n_eval, use_state, use_color)
     #wandb.finish()grasp_lift_touch
