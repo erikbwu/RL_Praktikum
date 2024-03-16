@@ -68,7 +68,7 @@ def evaluate_policy(
 
     while (episode_counts < episode_count_targets).any():
         actions, _ = model.predict(
-            observations[0]  # only take the first one (since there is only one env)
+            observations
         )
         new_observations, rewards, dones, infos = env.step(actions)
         current_rewards += rewards

@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 def run_bc(env_name: str, env_prefix: str, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch,
            num_epoch: int = 1, num_traj: int = 5, use_color: bool = False, use_state: bool = False, n_eval: int = 0):
     path = f'../../../sofa_env_demonstrations/{env_name}'
-    path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
+    #path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     start_time = datetime.now().strftime('%Y-%m-%d_%H:%M')
     grid_size = get_grid_size_from_string(env_name)
 
@@ -56,9 +56,9 @@ def run_bc(env_name: str, env_prefix: str, batch_size: int = 2, learning_rate=la
         optimizer_kwargs={'lr': learning_rate(0)}
     )
 
-    # reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
-    # log.info(f"Reward before training: {reward_before_training}")
-    # wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
+    reward_before_training, std_reward = evaluate_policy(bc_trainer.policy, env, 1)
+    log.info(f"Reward before training: {reward_before_training}")
+    wandb.log({"reward": reward_before_training, "std_reward": std_reward, 'epoch': 0})
     Path(f'./model/BC/{env_name}/{start_time}/').mkdir(parents=True, exist_ok=True)
     n_run = 1
     while True:
