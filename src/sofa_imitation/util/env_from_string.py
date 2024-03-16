@@ -75,13 +75,11 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
         )
         if use_state:
             env = Monitor(env)
-            env = TimeLimit(env, max_episode_steps=500)
+            env = TimeLimit(env, max_episode_steps=1000)
             env = RolloutInfoWrapper(env)
             env = FloatObservationWrapper(env)
         else:
-            env = make_env(env, use_color, 500, depth_cutoff=245)
-        #return env
-        # return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
+            env = make_env(env, use_color, 1000, depth_cutoff=245)
         return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
     elif env_name == 'pick_and_place':
