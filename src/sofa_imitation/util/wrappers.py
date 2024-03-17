@@ -162,6 +162,7 @@ class SofaEnvPointCloudObservations(gym.ObservationWrapper):
                 pcd = pos
 
         if self.points_only:
+            print(pcd.shape)
             return pcd
         else:
             return {
@@ -449,6 +450,43 @@ def wait_all(object_list, timeout: Optional[float] = None):
                         return all_ready
 
 
+import torch
+from torch_geometric.data import Data
+from torch_geometric.transforms import GridSampling
+
+class PygDataObservationWrapper(gym.ObservationWrapper):
+    
+    def __init__(
+        self,
+        env: gym.Env,
+        grid_size: float,
+    ):
+        super().__init__(env)
+        self.grid_sampling = GridSampling(grid_size)
+
+    def observation(self, obs) -> Data:
+        """Replaces the observation of a step with a Pytorch Geometric Data class"""
+
+        assert isinstance(obs, torch.Tensor) or isinstance(obs, np.ndarray)
+        assert len(obs.shape) == 2, print(obs.shape)  # (#points_dim, features/pos dim)
+
+        if isinstance(obs, np.ndarray):
+            obs = torch.from_numpy(obs)
+
+        # num_points = torch.tensor([len(points) for points in obs])
+        # batch = torch.repeat_interleave(
+        #     torch.arange(len(num_points), device=num_points.device),
+        #     repeats=num_points,
+        # )
+        # obs = torch.flatten(obs, end_dim=1)
+        if obs.shape[-1] != 3:  # has color
+            obs = Data(pos=obs[:, :3], batch=torch.zeros(len(obs)), x=obs[:, 3:])
+        else:
+            obs = Data(pos=obs, batch=torch.zeros(len(obs)))
+        obs = self.grid_sampling(obs)
+
+        return obs
+
 class FloatObservationWrapper(gym.ObservationWrapper):
     def __init__(
         self,
@@ -457,7 +495,7 @@ class FloatObservationWrapper(gym.ObservationWrapper):
         super().__init__(env)
 
     def observation(self, observation) -> np.ndarray:
-        """Replaces the observation of a step in a sofa_env scene with a point cloud."""
+        """Returns a float observation"""
 
         return numpy.asarray(observation, dtype=np.float32)
 
