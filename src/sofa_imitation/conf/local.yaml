@@ -1,6 +1,6 @@
 defaults:
   - hyperparameter: local_hp
-  - env: ligating_loop
+  - env: rope_cutting
   - override hydra/launcher: submitit_local
   - _self_
 
