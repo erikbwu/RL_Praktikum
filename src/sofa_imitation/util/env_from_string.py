@@ -16,7 +16,7 @@ from .wrappers import RolloutInfoWrapper
 
 def get_env(env_name: str, use_state:bool = False, should_render: bool = False, use_color: bool = True, image_shape = (256,256)):
     render_mode = RenderMode.HUMAN if should_render else RenderMode.HEADLESS
-    image_shape = (70,70)
+    image_shape = (100,100)
 
     if env_name == 'ligating_loop':
         from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
@@ -146,7 +146,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
             env = make_env(env, use_color, 600, depth_cutoff=350)
 
         #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
-        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=CustomSubprocVecEnv)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
     elif env_name == 'grasp_lift_touch':
         from sofa_env.scenes.grasp_lift_touch.grasp_lift_touch_env import GraspLiftTouchEnv, Phase, ObservationType
@@ -204,7 +204,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
             env = make_env(env, use_color, 600)
 
         #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
-        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=CustomSubprocVecEnv)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
 
 def get_grid_size_from_string(env: str):
