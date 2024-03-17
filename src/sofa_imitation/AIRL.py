@@ -10,17 +10,18 @@ from omegaconf import DictConfig, OmegaConf
 
 
 from stable_baselines3 import PPO
+from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.ppo import MlpPolicy
 
 from imitation.rewards.reward_nets import BasicShapedRewardNet
 from imitation.util.networks import RunningNorm
 
+from util.buffer import ListRolloutBuffer
 from util.env_from_string import get_env, get_grid_size_from_string, action_dim_from_string
 from util.data import npz_to_transitions, npz_to_state_transitions
 from util.evaluate_policy import evaluate_policy
-from policy.PointNetActorCritic import PointNetFeaturesExtractor, PointNetActorCriticPolicy
+from policy.PointNetActorCritic import PointNetActorCriticPolicy
 from policy.PointNetRewardNet import PointNetRewardNet
-from util.wrappers import FloatObservationWrapper
 
 log = logging.getLogger(__name__)
 SEED = 42
@@ -37,7 +38,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
 
     assert isinstance(learning_rate, float) or isinstance(learning_rate, int)
 
-    env = get_env(env_name, use_state, should_render=False)
+    env = get_env(env_name, use_state, should_render=True)
 
     if use_state:
         demos = npz_to_state_transitions(path, env_prefix, num_traj)
@@ -49,6 +50,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
             normalize_input_layer=RunningNorm,  # todo maybe normalize myself?
         )
         AIRL = airl.AIRL
+        rollout_buffer_class = RolloutBuffer
 
     else:
         demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demo'])
@@ -61,6 +63,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
         reward_net = PointNetRewardNet(env.observation_space, env.action_space, grid_size['FeatureExtractor'],
                                        inp_features_dim=3 if use_color else 0, action_features_dim=action_dim_from_string(env_name))
         AIRL = airl.AIRL_Pyg
+        rollout_buffer_class = ListRolloutBuffer
     log.info('Finished loading train data')
 
 
@@ -76,6 +79,7 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
         n_epochs=5,
         seed=SEED,
         policy_kwargs=policy_kwargs,
+        rollout_buffer_class=rollout_buffer_class
     )
 
     airl_trainer = AIRL(
@@ -126,7 +130,7 @@ def hydra_run(cfg: DictConfig):
                notes='', tags=[f'lr={lr}', env_name, f'use_state={use_state}'])
     run_AIRL(env_name, env_prefix, train_steps, demo_batch_size,
               bs, lr, num_traj, n_eval, use_state, use_color)
-    #wandb.finish()grasp_lift_touch
+
 
 
 if __name__ == "__main__":
