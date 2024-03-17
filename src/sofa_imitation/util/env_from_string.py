@@ -6,6 +6,7 @@ import numpy as np
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from .make_env import make_env
+from .subproc_vec_env import CustomSubprocVecEnv
 from .wrappers import WatchdogVecEnv, FloatObservationWrapper
 
 from gymnasium.wrappers import TimeLimit
@@ -13,9 +14,9 @@ from stable_baselines3.common.monitor import Monitor
 from .wrappers import RolloutInfoWrapper
 
 
-def get_env(env_name: str, use_state:bool = False, should_render: bool = False, use_color: bool = True):
+def get_env(env_name: str, use_state:bool = False, should_render: bool = False, use_color: bool = True, image_shape = (256,256)):
     render_mode = RenderMode.HUMAN if should_render else RenderMode.HEADLESS
-    image_shape = (256,256)
+    image_shape = (70,70)
 
     if env_name == 'ligating_loop':
         from sofa_env.scenes.ligating_loop.ligating_loop_env import LigatingLoopEnv, ObservationType, ActionType
@@ -75,11 +76,11 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
         )
         if use_state:
             env = Monitor(env)
-            env = TimeLimit(env, max_episode_steps=1000)
+            env = TimeLimit(env, max_episode_steps=800)
             env = RolloutInfoWrapper(env)
             env = FloatObservationWrapper(env)
         else:
-            env = make_env(env, use_color, 1000, depth_cutoff=245)
+            env = make_env(env, use_color, 800, depth_cutoff=245)
         return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
 
     elif env_name == 'pick_and_place':
@@ -145,7 +146,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
             env = make_env(env, use_color, 600, depth_cutoff=350)
 
         #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
-        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=CustomSubprocVecEnv)
 
     elif env_name == 'grasp_lift_touch':
         from sofa_env.scenes.grasp_lift_touch.grasp_lift_touch_env import GraspLiftTouchEnv, Phase, ObservationType
@@ -203,7 +204,7 @@ def get_env(env_name: str, use_state:bool = False, should_render: bool = False, 
             env = make_env(env, use_color, 600)
 
         #return WatchdogVecEnv([lambda: env], step_timeout_sec=45)
-        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=SubprocVecEnv)
+        return make_vec_env(lambda : env, n_envs=1, vec_env_cls=CustomSubprocVecEnv)
 
 
 def get_grid_size_from_string(env: str):
