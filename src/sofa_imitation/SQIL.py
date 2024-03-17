@@ -1,8 +1,11 @@
 import logging
+import hydra
+import wandb
 
 import datasets
 from datetime import datetime
 import gymnasium as gym
+from omegaconf import OmegaConf, DictConfig
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.ppo import MlpPolicy
@@ -16,7 +19,7 @@ from util.evaluate_policy import evaluate_policy
 from policy.PointNetActorCritic import PointNetFeaturesExtractor, PointNetActorCriticPolicy
 
 log = logging.getLogger(__name__)
-def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: int, batch_size: int = 256, learning_rate: float = 0.0001,
+def run_SQIL(env_name: str, env_prefix: str,learning_rate: float = 0.0001,
              num_traj: int = 2, n_eval: int = 0, use_state: bool = False, use_color: bool = False):
     # path = f'../../../sofa_env_demonstrations/{env_name}'
     path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
@@ -53,3 +56,24 @@ def run_AIRL(env_name: str, env_prefix: str, train_steps: int, demo_batch_size: 
     sqil_trainer.train(total_timesteps=1_000_000)
     reward, _ = evaluate_policy(sqil_trainer.policy, sqil_trainer.venv, 10)
     print("Reward:", reward)
+
+@hydra.main(version_base=None, config_path="conf", config_name="local_AIRL")
+def hydra_run(cfg: DictConfig):
+    log.info(OmegaConf.to_yaml(cfg))
+    lr = cfg.hyperparameter.learning_rate
+    bs = cfg.hyperparameter.batch_size
+    num_traj = cfg.hyperparameter.number_trajectories
+    use_color = cfg.hyperparameter.use_color
+    n_eval = cfg.hyperparameter.number_evaluations
+    use_state = cfg.hyperparameter.use_state
+    train_steps = cfg.hyperparameter.train_steps
+    demo_batch_size = cfg.hyperparameter.demo_batch_size
+
+    env_name = cfg.env.env_name
+    env_prefix = cfg.env.env_prefix
+
+    wandb.init(project="Imitation_Sofa_AIRL", config=OmegaConf.to_container(cfg, resolve=True),
+               settings=wandb.Settings(start_method="thread"),
+               notes='', tags=[f'lr={lr}', env_name, f'use_state={use_state}'])
+    run_SQIL(env_name, env_prefix, train_steps, demo_batch_size,
+              bs, lr, num_traj, n_eval, use_state, use_color)
