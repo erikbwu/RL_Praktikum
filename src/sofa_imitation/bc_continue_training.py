@@ -28,7 +28,7 @@ def run_bc(env_name, env_prefix, batch_size: int = 2, learning_rate=lambda epoch
         lr = learning_rate
         learning_rate = lambda _: lr
 
-    env = get_env(env_name, use_state, should_render=True)
+    env = get_env(env_name, use_state, cap_points=False, should_render=False)
 
     rng = np.random.default_rng()
 
