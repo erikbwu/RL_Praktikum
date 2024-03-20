@@ -1,0 +1,6 @@
+defaults:
+  - default_hyperparam
+
+number_trajectories: 500
+demo_batch_size: 10000
+train_steps: 2000000
