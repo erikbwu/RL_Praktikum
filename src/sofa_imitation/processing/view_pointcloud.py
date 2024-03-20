@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 import torch
 
-spath = '/media/erik/Volume/sofa_env_demonstrations/'
+spath = '/media/erik/Volume/sofa_env_demonstrations'
 ligating_loop_path = '/home/erik/sofa_env_demonstrations/ligating_loop'
 pick_and_place = f'/media/erik/Volume/sofa_env_demonstrations/pick_and_place'
 
@@ -25,11 +25,11 @@ def display3d(path):
     vis.add_geometry(pcd)
 
 
-    for timestep in range(0, len(npz_data['rgb']), 5):
+    for timestep in range(0, len(npz_data['rgb'])):
         print('timestep: ', timestep)
         rgb = npz_data['rgb'][timestep]
         depth = npz_data['depth'][timestep]
-
+        depth = np.where(depth >= 0.99*depth.max(), 0, depth)
         color_image = o3d.geometry.Image(rgb)
         depth_image = o3d.geometry.Image(depth)
 
@@ -52,6 +52,7 @@ def display3d(path):
 
         #geometry.points = pcd.points
         #geometry.colors = pcd.colors
+
         vis.add_geometry(pcd)
         vis.poll_events()
         vis.update_renderer()
@@ -61,8 +62,10 @@ def display3d(path):
 def display_array(pcd_array, colors = None):
     pcd = o3d.geometry.PointCloud()
     pcd_array = np.asarray(pcd_array)
-    pcd.points = o3d.utility.Vector3dVector(pcd_array)
     print(len(pcd_array))
+
+    pcd.points = o3d.utility.Vector3dVector(pcd_array)
+
     if colors is not None:
         pcd.colors = o3d.utility.Vector3dVector(np.asarray(colors))
 
@@ -78,8 +81,8 @@ def get_z_fars(num=100):
 
 if __name__ == '__main__':
     path = f'{pick_and_place}/PickAndPlaceEnv_4.npz'
-    path = f'{ligating_loop_path}/LigatingLoopEnv_1.npz'
+    lp_path = f'{ligating_loop_path}/LigatingLoopEnv_1.npz'
     glt_path = f'{spath}/grasp_lift_touch/GraspLiftTouchEnv_1.npz'
     rp_path = f'{spath}/rope_cutting/RopeCuttingEnv_1.npz'
-    display3d(rp_path)
+    display3d(path)
    #get_z_fars(100)
