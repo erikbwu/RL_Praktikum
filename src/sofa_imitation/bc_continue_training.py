@@ -18,9 +18,10 @@ log = logging.getLogger(__name__)
 
 def run_bc(env_name, env_prefix, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, use_state = False, n_eval: int = 0):
-    n_run = 28
-    start_time = '2024-03-17_15:53'
+    n_run = 120
+    start_time = '2024-03-17_17:43'
     path = f'../../../sofa_env_demonstrations/{env_name}'
+    path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     model_path = f'./model/BC/{env_name}/{start_time}/run_{n_run}'
     grid_size = get_grid_size_from_string(env_name)
 
