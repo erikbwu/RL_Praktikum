@@ -162,7 +162,6 @@ class SofaEnvPointCloudObservations(gym.ObservationWrapper):
                 pcd = pos
 
         if self.points_only:
-            print(pcd.shape)
             return pcd
         else:
             return {
