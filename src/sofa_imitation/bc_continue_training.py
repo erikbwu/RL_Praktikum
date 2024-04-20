@@ -18,8 +18,8 @@ log = logging.getLogger(__name__)
 
 def run_bc(env_name, env_prefix, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, use_state = False, n_eval: int = 0):
-    n_run = 120
-    start_time = '2024-03-17_17:43'
+    n_run = 28
+    start_time = '2024-03-18_10:14'
     path = f'../../../sofa_env_demonstrations/{env_name}'
     path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     model_path = f'./model/BC/{env_name}/{start_time}/run_{n_run}'
@@ -34,13 +34,13 @@ def run_bc(env_name, env_prefix, batch_size: int = 2, learning_rate=lambda epoch
     rng = np.random.default_rng()
 
     if use_state:
-        pass
+        assert False
 
     else:
         demos = npz_to_transitions(path, env_prefix, num_traj, use_color, grid_size['Demo'])
         policy = PointNetActorCriticPolicy(env.observation_space, env.action_space, learning_rate, [256, 128, 64, 32],
                                            grid_size['FeatureExtractor'], 3 if use_color else 0)
-        policy.load(model_path, device='cuda')
+        policy = policy.load(model_path, device='cuda')
 
     log.info('Finished loading train data')
 
@@ -86,7 +86,7 @@ def hydra_run(cfg: DictConfig):
 
     wandb.init(project="Imitation_Sofa", config=OmegaConf.to_container(cfg, resolve=True),
                settings=wandb.Settings(start_method="thread"), notes='',
-               resume='jmwu3pmx', tags=['nn=[256,128,64,32]', f'lr={lr}', env_name, 'BC', f'use_state={use_state}'])
+               resume="lb5t19zs", tags=['nn=[256,128,64,32]', f'lr={lr}', env_name, 'BC', f'use_state={use_state}'])
 
     run_bc(env_name, env_prefix, bs, lr, n_epochs, num_traj, use_color,use_state, n_eval)
     wandb.finish()
