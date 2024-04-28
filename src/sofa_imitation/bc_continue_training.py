@@ -21,7 +21,7 @@ def run_bc(env_name, env_prefix, batch_size: int = 2, learning_rate=lambda epoch
     n_run = 28
     start_time = '2024-03-18_10:14'
     path = f'../../../sofa_env_demonstrations/{env_name}'
-    path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
+    #path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
     model_path = f'./model/BC/{env_name}/{start_time}/run_{n_run}'
     grid_size = get_grid_size_from_string(env_name)
 
