@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def run_bc(env_name, env_prefix, batch_size: int = 2, learning_rate=lambda epoch: 1e-3 * 0.99 ** epoch, num_epoch: int = 1,
            num_traj: int = 5, use_color: bool = False, use_state = False, n_eval: int = 0):
-    n_run = 28
+    n_run = 93
     start_time = '2024-03-18_10:14'
     path = f'../../../sofa_env_demonstrations/{env_name}'
     #path = f'/media/erik/Volume/sofa_env_demonstrations/{env_name}'
